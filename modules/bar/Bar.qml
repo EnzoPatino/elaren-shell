@@ -21,6 +21,13 @@ PanelWindow {
 
     property bool revealed: false
 
+    // Popup abierto ("calendar", "system" o ""). Solo uno a la vez.
+    property string activePopup: ""
+
+    function togglePopup(name: string): void {
+        activePopup = activePopup === name ? "" : name;
+    }
+
     // Un tic de retardo para que los Behavior ya estén activos.
     Timer {
         interval: 60
@@ -80,6 +87,8 @@ PanelWindow {
             anchors.centerIn: parent
             revealed: bar.revealed
             revealDelay: 200
+            calendarOpen: bar.activePopup === "calendar"
+            onClicked: bar.togglePopup("calendar")
         }
 
         // ── Derecha ───────────────────────────────────────────────────────
@@ -88,6 +97,14 @@ PanelWindow {
             anchors.rightMargin: Theme.spacing.small + 1
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacing.normal
+
+            SystemWidget {
+                id: system
+                revealed: bar.revealed
+                revealDelay: 230
+                popupOpen: bar.activePopup === "system"
+                onClicked: bar.togglePopup("system")
+            }
 
             MediaWidget {
                 anchors.verticalCenter: parent.verticalCenter
@@ -119,7 +136,13 @@ PanelWindow {
 
     CalendarPopup {
         anchorItem: clock
-        open: clock.calendarOpen
-        onDismissed: clock.calendarOpen = false
+        open: bar.activePopup === "calendar"
+        onDismissed: if (bar.activePopup === "calendar") bar.activePopup = ""
+    }
+
+    SystemPopup {
+        anchorItem: system
+        open: bar.activePopup === "system"
+        onDismissed: if (bar.activePopup === "system") bar.activePopup = ""
     }
 }

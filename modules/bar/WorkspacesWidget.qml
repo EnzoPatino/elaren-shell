@@ -4,7 +4,7 @@ import "../../theme"
 import "../../components"
 import "../../services"
 
-// Escritorios virtuales. El indicador activo se desplaza con efecto
+// Escritorios virtuales de KWin. El indicador activo se desplaza con efecto
 // "gusano": el borde delantero va rápido y el trasero lo alcanza después.
 Item {
     id: root
@@ -60,18 +60,35 @@ Item {
                 required property var modelData
                 required property int index
                 readonly property bool isActive: index === root.active
+                readonly property bool occupied: KWin.windowsOn(modelData.id).length > 0
 
                 width: root.cellSize
                 height: root.cellSize
 
                 StyledText {
                     anchors.centerIn: parent
-                    text: cell.modelData.name || (cell.index + 1)
+                    text: cell.index + 1
                     font.pixelSize: Theme.font.small
                     font.weight: cell.isActive ? Font.Bold : Font.Medium
-                    color: cell.isActive ? Theme.textOnPrimary : cell.modelData.urgent ? Theme.error : Theme.textMuted
+                    color: cell.isActive ? Theme.textOnPrimary : cell.occupied ? Theme.text : Theme.outline
                     scale: cell.isActive ? 1.1 : 1
 
+                    Behavior on scale { Anim { easing.bezierCurve: Theme.anim.expressiveFast } }
+                }
+
+                // Punto bajo los escritorios que tienen ventanas
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 1
+                    width: 3
+                    height: 3
+                    radius: 1.5
+                    color: Theme.primary
+                    opacity: cell.occupied && !cell.isActive ? 0.9 : 0
+                    scale: opacity > 0 ? 1 : 0
+
+                    Behavior on opacity { Anim {} }
                     Behavior on scale { Anim { easing.bezierCurve: Theme.anim.expressiveFast } }
                 }
 

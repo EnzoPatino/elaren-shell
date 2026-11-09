@@ -1,25 +1,25 @@
 pragma Singleton
 import QtQuick
 import Quickshell
-import Quickshell.WindowManager
 
-// Escritorios virtuales vía ext-workspace-v1 (KWin en Plasma 6).
-// Si el compositor no lo expone, `list` queda vacía y la barra oculta el módulo.
+// Escritorios virtuales de KWin (vía el puente de services/KWin.qml).
 Singleton {
     id: root
 
-    readonly property list<Windowset> list: WindowManager.windowsets.filter(w => w.shouldDisplay)
-    readonly property int activeIndex: list.findIndex(w => w.active)
+    readonly property list<var> list: KWin.desktops
+    readonly property int activeIndex: KWin.currentDesktopIndex
 
-    function activate(index: int): void {
-        const ws = list[index];
-        if (ws?.canActivate) ws.activate();
+    function isOccupied(index: int): bool {
+        const desktop = list[index];
+        return desktop ? KWin.windowsOn(desktop.id).length > 0 : false;
     }
 
-    // Cambia al escritorio siguiente/anterior (con vuelta circular).
+    function activate(index: int): void {
+        const desktop = list[index];
+        if (desktop) KWin.switchDesktop(desktop.id);
+    }
+
     function cycle(step: int): void {
-        if (list.length === 0) return;
-        const from = activeIndex < 0 ? 0 : activeIndex;
-        activate((from + step + list.length) % list.length);
+        if (list.length > 0) KWin.stepDesktop(step);
     }
 }

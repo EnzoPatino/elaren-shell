@@ -11,7 +11,6 @@ BarGroup {
 
     padding: Theme.spacing.large
     clickable: true
-    onClicked: root.calendarOpen = !root.calendarOpen
     color: calendarOpen ? Theme.surfaceHigh : Theme.surfaceContainer
 
     MaterialIcon {
