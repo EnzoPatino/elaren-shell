@@ -30,6 +30,19 @@ ELAREN_ANIM_SCALE=2 ./scripts/run.sh
 |           | Bandeja del sistema   | Clic: activar · Derecho: menú · Medio: acción secundaria |
 |           | Volumen y batería     | Rueda: ±5 % · Clic en icono: silenciar · Arrastrar: fijar|
 
+## Reproductor
+
+Clic en el widget de música de la barra: tarjeta con vinilo (clic = pausa,
+rueda = ±5 s), progreso, controles, volumen y selector de reproductor. El botón
+de arriba a la derecha cambia al **modo letra**: solo el disco, el visualizador
+y la letra sincronizada (clic en una línea para saltar a ese momento).
+
+- Letras: [LRCLIB](https://lrclib.net) vía `scripts/lyrics.py`, con caché en
+  `~/.cache/elaren/lyrics`. Solo se consulta con el modo letra abierto.
+- Visualizador: usa [cava](https://github.com/karlstav/cava) si está instalado
+  (`sudo apt install cava`); si no, barras moduladas por el nivel de audio real
+  de PipeWire.
+
 ## Lanzador de aplicaciones
 
 Panel a pantalla completa con buscador, secciones (Todas, Frecuentes, Juegos,

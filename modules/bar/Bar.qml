@@ -15,14 +15,17 @@ PanelWindow {
         left: true
         right: true
     }
-    implicitHeight: Theme.bar.height
+    // Pegada al borde superior (no flotante): solo los costados tienen margen
+    // y las esquinas de abajo van redondeadas.
+    implicitHeight: Theme.bar.height - Theme.bar.margin
     color: "transparent"
     WlrLayershell.namespace: "elaren-bar"
 
     // Desenfoque real (KWin) detrás de la barra: el vidrio deja ver el fondo.
     BackgroundEffect.blurRegion: Region {
         item: background
-        radius: background.radius
+        bottomLeftRadius: background.bottomLeftRadius
+        bottomRightRadius: background.bottomRightRadius
     }
 
     property bool revealed: false
@@ -45,22 +48,27 @@ PanelWindow {
         id: background
 
         anchors.fill: parent
-        anchors.topMargin: Theme.bar.margin
         anchors.leftMargin: Theme.bar.margin
         anchors.rightMargin: Theme.bar.margin
-        radius: Theme.radius.large
+        topLeftRadius: 0
+        topRightRadius: 0
+        bottomLeftRadius: Theme.radius.large
+        bottomRightRadius: Theme.radius.large
         color: Theme.glass
         border.color: Theme.glassBorder
         border.width: 1
 
-        // Brillo superior: da volumen al vidrio
+        // Brillo inferior: un filo de luz que marca el borde de la barra
         Rectangle {
             anchors.fill: parent
             anchors.margins: 1
-            radius: parent.radius - 1
+            topLeftRadius: 0
+            topRightRadius: 0
+            bottomLeftRadius: parent.bottomLeftRadius - 1
+            bottomRightRadius: parent.bottomRightRadius - 1
             gradient: Gradient {
-                GradientStop { position: 0; color: Theme.glassHighlight }
-                GradientStop { position: 0.6; color: "transparent" }
+                GradientStop { position: 0.4; color: "transparent" }
+                GradientStop { position: 1; color: Theme.glassHighlight }
             }
         }
 
@@ -174,8 +182,9 @@ PanelWindow {
         onDismissed: if (bar.activePopup === "system") bar.activePopup = ""
     }
 
-    NowPlayingWindow {
-        open: bar.activePopup === "media"
+    NowPlayingPopup {
+        anchorItem: media
+        open: bar.activePopup === "media" && Media.available
         onDismissed: if (bar.activePopup === "media") bar.activePopup = ""
     }
 }

@@ -43,6 +43,18 @@ StyledRect {
     }
     Behavior on implicitWidth { Anim { duration: Theme.anim.slow; easing.bezierCurve: Theme.anim.emphasizedDecel } }
 
+    // Brillo suave al pasar el ratón (en todos los grupos, no solo los clicables)
+    Rectangle {
+        anchors.fill: parent
+        radius: root.radius
+        color: "white"
+        opacity: groupHover.hovered ? 0.045 : 0
+
+        Behavior on opacity { Anim { duration: Theme.anim.fast } }
+    }
+
+    HoverHandler { id: groupHover }
+
     Row {
         id: row
         x: root.padding

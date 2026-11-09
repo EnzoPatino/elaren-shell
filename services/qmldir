@@ -9,3 +9,5 @@ singleton Apps 1.0 Apps.qml
 singleton SystemStats 1.0 SystemStats.qml
 singleton AppLauncher 1.0 AppLauncher.qml
 singleton Icons 1.0 Icons.qml
+singleton Visualizer 1.0 Visualizer.qml
+singleton Lyrics 1.0 Lyrics.qml

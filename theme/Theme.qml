@@ -21,7 +21,7 @@ QtObject {
     readonly property color error: "#f38ba8"
 
     // Superficies translúcidas (sobre desenfoque de KWin)
-    readonly property color glass: Qt.alpha(surface, 0.68)
+    readonly property color glass: Qt.alpha(surface, 0.78)
     readonly property color glassBorder: Qt.alpha("white", 0.08)
     readonly property color glassHighlight: Qt.alpha("white", 0.05)
     readonly property color group: Qt.alpha("#4a4a6a", 0.32)

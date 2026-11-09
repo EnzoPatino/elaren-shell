@@ -1,5 +1,7 @@
 import QtQuick
 import Quickshell
+import Quickshell.Wayland
+import Quickshell.Widgets
 import "../theme"
 
 // Tarjeta desplegable bajo un elemento de la barra. Se abre con rebote,
@@ -13,6 +15,11 @@ PopupWindow {
     property int cardWidth: 276
     property int padding: Theme.spacing.large
     default property alias content: body.data
+    // Capa detrás del contenido, recortada con las esquinas de la tarjeta
+    // (p. ej. una imagen de fondo).
+    property alias decoration: decorationLayer.data
+    property color cardColor: Qt.alpha(Theme.surface, 0.96)
+    property color borderColor: Theme.glassBorder
 
     signal dismissed()
 
@@ -28,13 +35,23 @@ PopupWindow {
     color: "transparent"
     visible: progress > 0.001
 
-    onOpenChanged: {
+    function updateProgress(): void {
         progressAnim.easing.bezierCurve = open ? Theme.anim.expressive : Theme.anim.emphasizedAccel;
         progressAnim.duration = open ? Theme.anim.slow : Theme.anim.normal;
         progress = open ? 1 : 0;
     }
 
+    onOpenChanged: updateProgress()
+    // Si se crea ya abierto (p. ej. tras una recarga), también debe mostrarse.
+    Component.onCompleted: if (open) updateProgress()
+
     Behavior on progress { Anim { id: progressAnim } }
+
+    // Vidrio: desenfoque real de KWin detrás de la tarjeta.
+    BackgroundEffect.blurRegion: Region {
+        item: card
+        radius: card.radius
+    }
 
     Rectangle {
         id: card
@@ -44,9 +61,11 @@ PopupWindow {
         width: root.cardWidth
         height: body.implicitHeight + root.padding * 2
         radius: Theme.radius.large
-        color: Theme.surface
-        border.color: Theme.outline
+        color: root.cardColor
+        border.color: root.borderColor
         border.width: 1
+
+        Behavior on border.color { CAnim { duration: Theme.anim.slow } }
 
         opacity: Math.min(1, root.progress)
         scale: 0.85 + 0.15 * root.progress
@@ -62,6 +81,14 @@ PopupWindow {
             id: closeTimer
             interval: 700
             onTriggered: if (!hover.hovered) root.dismissed()
+        }
+
+        ClippingRectangle {
+            id: decorationLayer
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: card.radius - 1
+            color: "transparent"
         }
 
         Item {
