@@ -1,0 +1,27 @@
+# Caché de QML compilado
+*.qmlc
+*.jsc
+.cache/
+.qmlcache/
+
+# Configuración local del language server (rutas propias de cada máquina)
+.qmlls.ini
+
+# Logs de Quickshell y volcados
+*.qslog
+*.log
+core
+core.*
+
+# Editores / IDE
+.vscode/
+.idea/
+*.swp
+*~
+.kdev4/
+*.kdev4
+*.user
+
+# Sistema
+.directory
+.DS_Store
