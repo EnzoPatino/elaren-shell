@@ -1,27 +1,72 @@
-# Caché de QML compilado
-*.qmlc
-*.jsc
+# Quickshell, Qt y QML: cachés y archivos compilados
 .cache/
 .qmlcache/
+*.qmlc
+*.jsc
+*.qmltypes
+qmldir.qmltypes
 
-# Configuración local del language server (rutas propias de cada máquina)
+# Builds y artefactos de herramientas
+/build/
+/cmake-build-*/
+/target/
+/dist/
+/coverage/
+node_modules/
+CMakeFiles/
+CMakeCache.txt
+compile_commands.json
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.exe
+*.a
+*.lib
+
+# Configuración local, variables y credenciales
+.env
+.env.*
+!.env.example
+!.env.sample
+.secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+id_ecdsa
+
+# Configuración local de Quickshell / Qt Creator / Qt Language Server
 .qmlls.ini
+*.user
+*.user.*
+*.qmlproject.user
+*.pro.user
 
-# Logs de Quickshell y volcados
-*.qslog
+# Logs, volcados y archivos temporales
 *.log
+*.qslog
 core
 core.*
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
 
-# Editores / IDE
+# Editores e IDEs
 .vscode/
 .idea/
-*.swp
-*~
+.fleet/
 .kdev4/
 *.kdev4
-*.user
 
-# Sistema
-.directory
+# Archivos del sistema
 .DS_Store
+._*
+Thumbs.db
+Desktop.ini
+.directory
