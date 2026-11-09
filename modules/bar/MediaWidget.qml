@@ -6,7 +6,7 @@ import "../../components"
 import "../../services"
 
 // Now playing: carátula viva, progreso escrutable y controles al pasar
-// el ratón. El detalle completo se abre desde el botón de información.
+// el ratón. La portada o el título abren el reproductor completo.
 Reveal {
     id: root
 
@@ -87,6 +87,12 @@ Reveal {
 
                         Behavior on border.color { CAnim {} }
                     }
+
+                    StateLayer {
+                        radius: Theme.radius.full
+                        color: Theme.textOnPrimary
+                        onClicked: root.popupRequested()
+                    }
                 }
 
                 StyledText {
@@ -97,6 +103,12 @@ Reveal {
                     color: Media.playing ? Theme.text : Theme.textMuted
                     font.weight: Media.playing ? Font.Medium : Font.Normal
                     animate: true
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.popupRequested()
+                    }
                 }
 
                 Reveal {
@@ -166,7 +178,7 @@ Reveal {
 
                         MaterialIcon {
                             anchors.centerIn: parent
-                            text: "expand_more"
+                            text: "open_in_full"
                             color: root.popupOpen ? Theme.primary : Theme.textMuted
                             animateChange: false
                         }

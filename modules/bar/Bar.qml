@@ -174,8 +174,7 @@ PanelWindow {
         onDismissed: if (bar.activePopup === "system") bar.activePopup = ""
     }
 
-    MediaPopup {
-        anchorItem: media
+    NowPlayingWindow {
         open: bar.activePopup === "media"
         onDismissed: if (bar.activePopup === "media") bar.activePopup = ""
     }

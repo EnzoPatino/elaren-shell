@@ -21,6 +21,8 @@ Singleton {
     readonly property real duration: active?.length ?? 0
     readonly property bool hasProgress: (active?.lengthSupported ?? false) && duration > 0
     readonly property bool canSeek: active?.canSeek ?? false
+    readonly property bool shuffleSupported: active?.shuffleSupported ?? false
+    readonly property bool shuffled: active?.shuffle ?? false
     readonly property bool canScrub: canSeek && (active?.positionSupported ?? false) && hasProgress
     readonly property real progress: hasProgress
         ? Math.max(0, Math.min(1, position / duration))
@@ -45,6 +47,10 @@ Singleton {
 
     function seekBy(seconds: real): void {
         if (active?.canSeek) active.seek(seconds);
+    }
+
+    function toggleShuffle(): void {
+        if (active?.canControl && active.shuffleSupported) active.shuffle = !active.shuffle;
     }
 
     function togglePlaying(): void {
