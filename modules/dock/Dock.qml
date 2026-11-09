@@ -226,7 +226,6 @@ PanelWindow {
                             source: item.isSeparator ? "" : Apps.icon(item.modelData)
                             sourceSize: Qt.size(dock.iconSize * (1 + dock.zoom) * 1.5, dock.iconSize * (1 + dock.zoom) * 1.5)
                             fillMode: Image.PreserveAspectFit
-                            asynchronous: true
                             smooth: true
                             mipmap: true
                             scale: touch.pressed ? 0.85 : 1

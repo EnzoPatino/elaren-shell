@@ -19,7 +19,9 @@ StyledRect {
     implicitWidth: row.implicitWidth + padding * 2
     implicitHeight: Theme.bar.itemHeight
     radius: Theme.radius.full
-    color: Theme.surfaceContainer
+    color: Theme.group
+    border.color: Theme.glassBorder
+    border.width: 1
     clip: true
 
     opacity: revealed ? 1 : 0

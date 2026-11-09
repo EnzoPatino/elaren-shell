@@ -54,7 +54,7 @@ Singleton {
     }
 
     function icon(appId: string): string {
-        return Quickshell.iconPath(entry(appId)?.icon || appId, "application-x-executable");
+        return Icons.source(entry(appId)?.icon || appId);
     }
 
     function isPinned(appId: string): bool {

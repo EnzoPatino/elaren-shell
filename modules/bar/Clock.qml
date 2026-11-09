@@ -11,7 +11,7 @@ BarGroup {
 
     padding: Theme.spacing.large
     clickable: true
-    color: calendarOpen ? Theme.surfaceHigh : Theme.surfaceContainer
+    color: calendarOpen ? Theme.groupActive : Theme.group
 
     MaterialIcon {
         anchors.verticalCenter: parent.verticalCenter

@@ -17,7 +17,7 @@ BarGroup {
 
     clickable: true
     padding: Theme.spacing.normal + 2
-    color: popupOpen ? Theme.surfaceHigh : Theme.surfaceContainer
+    color: popupOpen ? Theme.groupActive : Theme.group
 
     HoverHandler { id: hover }
 

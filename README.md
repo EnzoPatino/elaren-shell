@@ -21,13 +21,33 @@ ELAREN_ANIM_SCALE=2 ./scripts/run.sh
 
 | Zona      | Módulo                | Interacción                                              |
 |-----------|-----------------------|----------------------------------------------------------|
-| Izquierda | Lanzador              | Clic: abre KRunner                                       |
+| Izquierda | Apps                  | Clic: abre el lanzador de aplicaciones                   |
+|           | Ventana activa        | Icono y título de la ventana enfocada                    |
 |           | Escritorios virtuales | Clic: cambiar · Rueda: siguiente/anterior                |
 | Centro    | Reloj                 | Clic: calendario (rueda: cambiar de mes)                 |
 | Derecha   | Sistema               | Hover: red · Clic: panel con gráficos de CPU/RAM/red, GPU, swap |
 |           | Multimedia (MPRIS)    | Hover: controles anterior / pausa / siguiente            |
 |           | Bandeja del sistema   | Clic: activar · Derecho: menú · Medio: acción secundaria |
 |           | Volumen y batería     | Rueda: ±5 % · Clic en icono: silenciar · Arrastrar: fijar|
+
+## Lanzador de aplicaciones
+
+Panel a pantalla completa con buscador, secciones (Todas, Frecuentes, Juegos,
+Internet, Multimedia, Gráficos, Desarrollo, Oficina, Sistema, Utilidades) y
+botones de bloquear / salir / reiniciar / apagar (los tres últimos piden
+confirmación con un segundo clic).
+
+- Escribí para buscar (nombre, descripción, palabras clave, o letras sueltas
+  en orden: "ffx" → Firefox). Las apps que más abrís suben en el ranking.
+- Flechas para moverse, Enter abre, Tab / Shift+Tab cambia de sección,
+  Esc borra la búsqueda o cierra.
+- Para abrirlo con un atajo, en Preferencias del sistema → Atajos → Añadir
+  comando, usá:
+  `qs ipc -p ~/proyectos/elaren-shell/shell.qml call launcher toggle`
+
+Los iconos se resuelven a archivos con `scripts/icon-resolver.py` según el tema
+de iconos de KDE (el proveedor `image://icon` de Quickshell dejaba iconos
+invisibles en algunas ventanas).
 
 ## Fondo y dock
 

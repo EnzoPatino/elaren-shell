@@ -19,6 +19,12 @@ PanelWindow {
     color: "transparent"
     WlrLayershell.namespace: "elaren-bar"
 
+    // Desenfoque real (KWin) detrás de la barra: el vidrio deja ver el fondo.
+    BackgroundEffect.blurRegion: Region {
+        item: background
+        radius: background.radius
+    }
+
     property bool revealed: false
 
     // Popup abierto ("calendar", "system" o ""). Solo uno a la vez.
@@ -43,9 +49,20 @@ PanelWindow {
         anchors.leftMargin: Theme.bar.margin
         anchors.rightMargin: Theme.bar.margin
         radius: Theme.radius.large
-        color: Theme.surface
-        border.color: Qt.alpha(Theme.outline, 0.6)
+        color: Theme.glass
+        border.color: Theme.glassBorder
         border.width: 1
+
+        // Brillo superior: da volumen al vidrio
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: parent.radius - 1
+            gradient: Gradient {
+                GradientStop { position: 0; color: Theme.glassHighlight }
+                GradientStop { position: 0.6; color: "transparent" }
+            }
+        }
 
         opacity: bar.revealed ? 1 : 0
         transform: Translate {
@@ -61,7 +78,8 @@ PanelWindow {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacing.normal
 
-            Launcher {
+            LauncherButton {
+                anchors.verticalCenter: parent.verticalCenter
                 revealed: bar.revealed
             }
 
@@ -78,6 +96,13 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
+            }
+
+            ActiveWindow {
+                anchors.verticalCenter: parent.verticalCenter
+                revealed: bar.revealed
+                revealDelay: 160
+                maxWidth: Math.min(320, bar.width * 0.17)
             }
         }
 
@@ -107,9 +132,12 @@ PanelWindow {
             }
 
             MediaWidget {
+                id: media
                 anchors.verticalCenter: parent.verticalCenter
                 revealed: bar.revealed
                 revealDelay: 260
+                popupOpen: bar.activePopup === "media"
+                onPopupRequested: bar.togglePopup("media")
             }
 
             Tray {
@@ -144,5 +172,11 @@ PanelWindow {
         anchorItem: system
         open: bar.activePopup === "system"
         onDismissed: if (bar.activePopup === "system") bar.activePopup = ""
+    }
+
+    MediaPopup {
+        anchorItem: media
+        open: bar.activePopup === "media"
+        onDismissed: if (bar.activePopup === "media") bar.activePopup = ""
     }
 }

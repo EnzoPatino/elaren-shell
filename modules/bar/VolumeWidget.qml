@@ -54,7 +54,7 @@ Row {
                 width: parent.width
                 height: 6
                 radius: Theme.radius.full
-                color: Theme.surfaceHigh
+                color: Qt.alpha(Theme.text, 0.12)
 
                 Rectangle {
                     width: Math.max(height, parent.width * Math.min(1, Audio.volume))
