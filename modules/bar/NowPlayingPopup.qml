@@ -27,15 +27,12 @@ AnimatedPopup {
     Behavior on lyricsAmount { Anim { duration: Theme.anim.slow; easing.bezierCurve: Theme.anim.emphasizedDecel } }
 
     // cava y la búsqueda de letra solo trabajan con la tarjeta visible.
-    property bool usingSpectrum: false
-    function syncSpectrum(): void {
-        const want = root.visible;
-        if (want && !usingSpectrum) Visualizer.acquire();
-        if (!want && usingSpectrum) Visualizer.release();
-        usingSpectrum = want;
+    Binding {
+        target: Visualizer
+        property: "popupActive"
+        value: root.visible
+        restoreMode: Binding.RestoreNone
     }
-    onVisibleChanged: syncSpectrum()
-    Component.onDestruction: if (usingSpectrum) Visualizer.release()
 
     Binding {
         target: Lyrics

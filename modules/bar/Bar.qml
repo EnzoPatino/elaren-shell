@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import "../../theme"
+import "../../config"
 import "../../components"
 import "../../services"
 
@@ -29,6 +30,12 @@ PanelWindow {
     }
 
     property bool revealed: false
+
+    // Cafeína: mientras está activa, la sesión no se suspende ni se bloquea.
+    IdleInhibitor {
+        window: bar
+        enabled: Caffeine.enabled
+    }
 
     // Popup abierto ("calendar", "system" o ""). Solo uno a la vez.
     property string activePopup: ""
@@ -93,7 +100,7 @@ PanelWindow {
 
             Reveal {
                 anchors.verticalCenter: parent.verticalCenter
-                shown: Workspaces.list.length > 0
+                shown: Workspaces.list.length > 0 && Config.barShowWorkspaces
 
                 BarGroup {
                     padding: 3
@@ -108,7 +115,7 @@ PanelWindow {
 
             ActiveWindow {
                 anchors.verticalCenter: parent.verticalCenter
-                revealed: bar.revealed
+                revealed: bar.revealed && Config.barShowActiveWindow
                 revealDelay: 160
                 maxWidth: Math.min(320, bar.width * 0.17)
             }
@@ -133,6 +140,7 @@ PanelWindow {
 
             SystemWidget {
                 id: system
+                visible: Config.barShowSystem
                 revealed: bar.revealed
                 revealDelay: 230
                 popupOpen: bar.activePopup === "system"
@@ -142,7 +150,7 @@ PanelWindow {
             MediaWidget {
                 id: media
                 anchors.verticalCenter: parent.verticalCenter
-                revealed: bar.revealed
+                revealed: bar.revealed && Config.barShowMedia
                 revealDelay: 260
                 popupOpen: bar.activePopup === "media"
                 onPopupRequested: bar.togglePopup("media")
@@ -151,7 +159,7 @@ PanelWindow {
             Tray {
                 anchors.verticalCenter: parent.verticalCenter
                 barWindow: bar
-                revealed: bar.revealed
+                revealed: bar.revealed && Config.barShowTray
                 revealDelay: 320
             }
 
@@ -159,12 +167,29 @@ PanelWindow {
                 revealed: bar.revealed
                 revealDelay: 380
 
+                CaffeineButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: Config.barShowCaffeine
+                }
+
+                NetworkWidget {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: Config.barShowNetwork
+                }
+
+                BrightnessWidget {
+                    anchors.verticalCenter: parent.verticalCenter
+                    shown: Brightness.available && Config.barShowBrightness
+                }
+
                 VolumeWidget {
                     anchors.verticalCenter: parent.verticalCenter
+                    visible: Config.barShowVolume
                 }
 
                 BatteryWidget {
                     anchors.verticalCenter: parent.verticalCenter
+                    shown: Battery.available && Config.barShowBattery
                 }
             }
         }

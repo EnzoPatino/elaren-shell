@@ -11,3 +11,8 @@ singleton AppLauncher 1.0 AppLauncher.qml
 singleton Icons 1.0 Icons.qml
 singleton Visualizer 1.0 Visualizer.qml
 singleton Lyrics 1.0 Lyrics.qml
+singleton Network 1.0 Network.qml
+singleton Brightness 1.0 Brightness.qml
+singleton Caffeine 1.0 Caffeine.qml
+singleton Settings 1.0 Settings.qml
+singleton Weather 1.0 Weather.qml

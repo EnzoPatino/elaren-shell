@@ -4,6 +4,7 @@ import "../../components"
 import "../../services"
 
 // Batería: cambia de color según el nivel y "late" mientras carga.
+// Al pasar el ratón muestra cuánto falta para vaciarse (o llenarse).
 Reveal {
     id: root
 
@@ -48,5 +49,21 @@ Reveal {
             font.pixelSize: Theme.font.small
             font.features: { "tnum": 1 }
         }
+
+        // Tiempo restante, al pasar el ratón
+        Reveal {
+            anchors.verticalCenter: parent.verticalCenter
+            shown: hover.hovered && Battery.timeLeft > 0 && !Battery.full
+
+            StyledText {
+                leftPadding: 4
+                text: (Battery.charging ? "llena en " : "") + SystemStats.formatDuration(Battery.timeLeft)
+                color: Theme.textMuted
+                font.pixelSize: Theme.font.small
+                font.features: { "tnum": 1 }
+            }
+        }
+
+        HoverHandler { id: hover }
     }
 }

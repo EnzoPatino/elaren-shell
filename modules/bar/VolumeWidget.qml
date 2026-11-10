@@ -44,49 +44,10 @@ Row {
         anchors.verticalCenter: parent.verticalCenter
         shown: root.expanded
 
-        Item {
-            implicitWidth: 72
-            implicitHeight: 24
-
-            Rectangle {
-                id: track
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width
-                height: 6
-                radius: Theme.radius.full
-                color: Qt.alpha(Theme.text, 0.12)
-
-                Rectangle {
-                    width: Math.max(height, parent.width * Math.min(1, Audio.volume))
-                    height: parent.height
-                    radius: Theme.radius.full
-                    color: Audio.muted ? Theme.outline : Theme.primary
-
-                    Behavior on width { Anim { duration: Theme.anim.fast } }
-                    Behavior on color { CAnim {} }
-                }
-            }
-
-            Rectangle {
-                id: knob
-                anchors.verticalCenter: parent.verticalCenter
-                x: Math.min(1, Audio.volume) * (parent.width - width)
-                width: drag.pressed ? 14 : 10
-                height: width
-                radius: width / 2
-                color: Audio.muted ? Theme.outline : Theme.primary
-
-                Behavior on x { Anim { duration: Theme.anim.fast } }
-                Behavior on width { Anim { easing.bezierCurve: Theme.anim.expressiveFast } }
-            }
-
-            MouseArea {
-                id: drag
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onPressed: event => Audio.setVolume(event.x / width)
-                onPositionChanged: event => { if (pressed) Audio.setVolume(event.x / width); }
-            }
+        PillSlider {
+            value: Audio.volume
+            dimmed: Audio.muted
+            onMoved: value => Audio.setVolume(value)
         }
     }
 

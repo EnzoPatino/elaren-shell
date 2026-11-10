@@ -43,6 +43,49 @@ y la letra sincronizada (clic en una línea para saltar a ese momento).
   (`sudo apt install cava`); si no, barras moduladas por el nivel de audio real
   de PipeWire.
 
+## Configuración
+
+Panel propio de Elaren: engranaje en el lanzador, **clic derecho en el botón
+"Apps"** de la barra, o `qs ipc -p ~/proyectos/elaren-shell/shell.qml call settings toggle`
+(también `call settings openPage visualizer`). Secciones: Visualizador,
+Apariencia (color de acento, velocidad de animaciones), Barra superior, Dock,
+Fondo y Acerca de. Los cambios se aplican al instante y se guardan en
+`~/.config/elaren/settings.json` (editable a mano; se recarga solo).
+
+## Widgets de escritorio
+
+Sobre el fondo y debajo de las ventanas (Configuración → Widgets):
+
+- **Reloj**: digital (dígitos que ruedan, segundos opcionales), analógico
+  (segundero con "tic" elástico) o en palabras ("Son las diez y cuarto").
+- **Saludo**: buenos días / tardes / noches, con clima y tema que suena.
+- **Música**: portada, progreso, controles y mini-espectro (solo con un
+  reproductor abierto).
+- **Monitor del sistema**: CPU, memoria, temperatura, red y tiempo encendido.
+- **Clima**: actual y 3 días, vía [Open-Meteo](https://open-meteo.com) para la
+  ciudad que configures (solo se envía el nombre de la ciudad).
+
+Se arrastran con el ratón para acomodarlos (la posición se guarda); se pueden
+bloquear, escalar y mostrar con o sin tarjeta de vidrio. En "Barra superior"
+también se puede ocultar cada módulo, incluidos cafeína, red, brillo, volumen
+y batería.
+
+## Visualizador de escritorio
+
+Mientras suena música aparecen sobre el fondo (debajo de las ventanas, sin
+capturar clics) barras estilo cava o una onda, con el color de la portada.
+Estilos: `bars`, `blocks`, `wave`, `mirror`, `line`; color de la portada, del
+tema o arcoíris; altura, opacidad, cantidad y grosor de barras, sensibilidad y
+tapitas. Todo desde Configuración → Visualizador, o por IPC:
+
+```bash
+qs ipc -p ~/proyectos/elaren-shell/shell.qml call visualizer cycle
+qs ipc -p ~/proyectos/elaren-shell/shell.qml call visualizer setStyle wave
+```
+
+Con cava instalado muestra el espectro real; sin cava, barras moduladas por el
+nivel de audio real de PipeWire.
+
 ## Lanzador de aplicaciones
 
 Panel a pantalla completa con buscador, secciones (Todas, Frecuentes, Juegos,

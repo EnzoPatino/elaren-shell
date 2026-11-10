@@ -1,10 +1,12 @@
 import QtQuick
+import Quickshell
 import "../../theme"
 import "../../components"
 import "../../services"
 
 // Reloj central: horas y minutos con dígitos que ruedan, los dos puntos
-// "respiran" con cada segundo y la fecha va aparte. Clic: calendario.
+// "respiran" con cada segundo y la fecha va aparte. Al pasar el ratón
+// aparecen los segundos. Clic: calendario.
 BarGroup {
     id: root
 
@@ -13,6 +15,14 @@ BarGroup {
     padding: Theme.spacing.large
     clickable: true
     color: calendarOpen ? Theme.groupActive : Theme.group
+
+    HoverHandler { id: hover }
+
+    SystemClock {
+        id: seconds
+        precision: SystemClock.Seconds
+        enabled: hover.hovered
+    }
 
     // Pulso de un segundo para los dos puntos
     property bool tick: false
@@ -57,6 +67,21 @@ BarGroup {
             font.pixelSize: Theme.font.large
             font.weight: Font.Bold
             font.features: { "tnum": 1 }
+        }
+        // Segundos: solo al pasar el ratón (y solo entonces corre el reloj de segundos)
+        Reveal {
+            anchors.verticalCenter: parent.verticalCenter
+            shown: hover.hovered
+
+            RollingText {
+                leftPadding: 2
+                text: Qt.formatDateTime(seconds.date, "ss")
+                color: Theme.primary
+                font.family: Theme.font.family
+                font.pixelSize: Theme.font.small
+                font.weight: Font.DemiBold
+                font.features: { "tnum": 1 }
+            }
         }
     }
 

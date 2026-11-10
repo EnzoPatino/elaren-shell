@@ -69,6 +69,8 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: AppLauncher.toggle()
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        // Clic izquierdo: lanzador. Clic derecho: Configuración.
+        onClicked: event => event.button === Qt.RightButton ? Settings.toggle() : AppLauncher.toggle()
     }
 }

@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import "../config"
 
 // Tokens de diseño de Elaren: colores, formas, tipografía y movimiento.
 QtObject {
@@ -13,9 +14,21 @@ QtObject {
     readonly property color outline: "#45455e"
     readonly property color text: "#e6e1e5"
     readonly property color textMuted: "#a9a4bb"
-    readonly property color primary: "#a6c8ff"
-    readonly property color textOnPrimary: "#0b2a52"
-    readonly property color secondary: "#cdb4ff"
+    // Acento elegido en Configuración → Apariencia
+    readonly property var accentPresets: [
+        { id: "blue", name: "Azul", primary: "#a6c8ff", secondary: "#cdb4ff", on: "#0b2a52" },
+        { id: "lavender", name: "Lavanda", primary: "#cdb4ff", secondary: "#f5c2e7", on: "#2a1452" },
+        { id: "pink", name: "Rosa", primary: "#f5a9c9", secondary: "#fab387", on: "#4a1030" },
+        { id: "mint", name: "Menta", primary: "#a6e3c4", secondary: "#89dceb", on: "#0d3a26" },
+        { id: "peach", name: "Durazno", primary: "#fab387", secondary: "#f9e2af", on: "#4a2208" },
+        { id: "sun", name: "Sol", primary: "#f9e2af", secondary: "#a6e3c4", on: "#3d3008" },
+        { id: "red", name: "Rubí", primary: "#f38ba8", secondary: "#cdb4ff", on: "#4a0b1c" }
+    ]
+    readonly property var accentPreset: accentPresets.find(p => p.id === Config.accent) ?? accentPresets[0]
+
+    readonly property color primary: accentPreset.primary
+    readonly property color textOnPrimary: accentPreset.on
+    readonly property color secondary: accentPreset.secondary
     readonly property color success: "#a6e3a1"
     readonly property color warning: "#f9e2af"
     readonly property color error: "#f38ba8"
@@ -63,11 +76,12 @@ QtObject {
     readonly property Fonts font: Fonts {}
 
     // ── Movimiento ────────────────────────────────────────────────────────
-    // ELAREN_ANIM_SCALE=0 desactiva las animaciones; 2 las hace el doble de lentas.
+    // Configuración → Apariencia, o ELAREN_ANIM_SCALE (0 = sin animaciones, 2 = el doble de lentas).
     component Motion: QtObject {
         readonly property real scale: {
             const v = parseFloat(Quickshell.env("ELAREN_ANIM_SCALE"));
-            return isNaN(v) || v < 0 ? 1 : v;
+            if (!isNaN(v) && v >= 0) return v;
+            return Math.max(0, Config.animationScale);
         }
         readonly property int fast: 150 * scale
         readonly property int normal: 280 * scale

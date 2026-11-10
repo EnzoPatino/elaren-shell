@@ -145,6 +145,33 @@ PanelWindow {
                 }
             }
 
+            // Abre el panel de Configuración de Elaren
+            Rectangle {
+                id: settingsButton
+                anchors.right: parent.right
+                anchors.verticalCenter: user.verticalCenter
+                width: 34
+                height: 34
+                radius: 17
+                color: Qt.alpha(Theme.text, 0.06)
+
+                MaterialIcon {
+                    anchors.centerIn: parent
+                    text: "settings"
+                    color: settingsTouch.containsMouse ? Theme.primary : Theme.textMuted
+                    animateChange: false
+                    rotation: settingsTouch.containsMouse ? 90 : 0
+
+                    Behavior on rotation { Anim { duration: Theme.anim.slow; easing.bezierCurve: Theme.anim.expressive } }
+                }
+
+                StateLayer {
+                    id: settingsTouch
+                    radius: 17
+                    onClicked: Settings.show("")
+                }
+            }
+
             ListView {
                 id: sectionList
 

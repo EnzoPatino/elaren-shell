@@ -4,8 +4,10 @@ import Quickshell
 import QtQuick
 import "modules/background"
 import "modules/bar"
+import "modules/desktop"
 import "modules/dock"
 import "modules/launcher"
+import "modules/settings"
 import "config"
 import "services"
 
@@ -13,6 +15,15 @@ import "services"
 ShellRoot {
     // Un único lanzador; el compositor lo abre en la pantalla enfocada.
     LauncherWindow {}
+
+    // Panel de Configuración (engranaje del lanzador o clic derecho en "Apps")
+    SettingsWindow {}
+
+    // Widgets de escritorio (reloj, saludo, música, sistema, clima) en la
+    // pantalla principal. Se activan en Configuración → Widgets.
+    DesktopWidgets {
+        screen: Quickshell.screens[0]
+    }
 
     Variants {
         model: Quickshell.screens
@@ -26,6 +37,15 @@ ShellRoot {
                 active: Wallpaper.drawsOwn
 
                 Background {
+                    screen: perScreen.modelData
+                }
+            }
+
+            // Barras/ondas sobre el fondo mientras suena música
+            LazyLoader {
+                active: Config.visualizerEnabled
+
+                AudioVisualizer {
                     screen: perScreen.modelData
                 }
             }

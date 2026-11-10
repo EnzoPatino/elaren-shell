@@ -15,6 +15,8 @@ Singleton {
     readonly property bool full: device?.state === UPowerDeviceState.FullyCharged
     readonly property bool low: !charging && level <= 0.2
     readonly property bool critical: !charging && level <= 0.1
+    // Segundos hasta llenarse (cargando) o vaciarse; 0 = UPower no lo sabe.
+    readonly property real timeLeft: (charging ? device?.timeToFull : device?.timeToEmpty) ?? 0
 
     readonly property string icon: {
         if (charging) return "battery_charging_full";
