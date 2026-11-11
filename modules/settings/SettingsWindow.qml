@@ -79,7 +79,7 @@ PanelWindow {
     property real demoClock: 0
 
     FrameAnimation {
-        running: root.visible && !root.liveAudio
+        running: root.previewing && !root.liveAudio
         onTriggered: {
             root.demoClock += frameTime;
             const n = Visualizer.barCount;
@@ -101,8 +101,12 @@ PanelWindow {
         }
     }
 
-    readonly property list<real> previewValues: liveAudio ? Visualizer.display : demo
-    readonly property list<real> previewCaps: liveAudio ? Visualizer.caps : demoCaps
+    // Con el panel cerrado las vistas previas no reciben datos: si no, las
+    // seis (la grande y las cinco tarjetas de estilo) se recalculaban en cada
+    // cuadro del espectro aunque nadie las viera (~16 ms por cuadro).
+    readonly property bool previewing: visible && Settings.page === "visualizer"
+    readonly property list<real> previewValues: !previewing ? [] : liveAudio ? Visualizer.display : demo
+    readonly property list<real> previewCaps: !previewing ? [] : liveAudio ? Visualizer.caps : demoCaps
     readonly property color previewColor: Config.visualizerColor === "cover" && Media.available ? Media.accent : Theme.primary
 
     // Fondo oscurecido; clic fuera cierra.
@@ -622,7 +626,7 @@ PanelWindow {
                 SliderRow {
                     icon: "height"
                     title: "Altura"
-                    description: "Altura máxima sobre el borde de la pantalla"
+                    description: "Hasta dónde llegan las barras más altas"
                     value: Config.visualizerHeight
                     from: 80
                     to: 480
@@ -650,6 +654,85 @@ PanelWindow {
                     stepSize: 0.1
                     display: v => "×" + v.toFixed(1)
                     onMoved: value => Config.visualizerGain = value
+                }
+            }
+
+            SettingsCard {
+                title: "Ubicación"
+                icon: "open_with"
+
+                RowBase {
+                    icon: "drag_pan"
+                    title: "Acomodar con el ratón"
+                    description: "Arrastralo a cualquier lugar; rueda: largo, clic derecho: girar"
+
+                    ActionButton {
+                        label: "Mover"
+                        onClicked: {
+                            Config.visualizerEnabled = true;
+                            Settings.hide();
+                            Visualizer.placing = true;
+                        }
+                    }
+                }
+                ChoiceRow {
+                    icon: "place_item"
+                    title: "Lugar"
+                    description: "Atajos: cada uno ya mira hacia el centro"
+                    current: {
+                        const x = Config.visualizerX, y = Config.visualizerY, d = Config.visualizerDirection;
+                        const near = (a, b) => Math.abs(a - b) < 0.02;
+                        if (near(x, 0.5) && near(y, 1) && d === "up") return "bottom";
+                        if (near(x, 0.5) && near(y, 0) && d === "down") return "top";
+                        if (near(x, 0) && near(y, 0.5) && d === "right") return "left";
+                        if (near(x, 1) && near(y, 0.5) && d === "left") return "right";
+                        if (near(x, 0.5) && near(y, 0.5)) return "center";
+                        return "";
+                    }
+                    options: [
+                        { value: "bottom", label: "Abajo" },
+                        { value: "top", label: "Arriba" },
+                        { value: "left", label: "Izq." },
+                        { value: "right", label: "Der." },
+                        { value: "center", label: "Centro" }
+                    ]
+                    onChosen: value => {
+                        const presets = {
+                            bottom: { x: 0.5, y: 1, d: "up" },
+                            top: { x: 0.5, y: 0, d: "down" },
+                            left: { x: 0, y: 0.5, d: "right" },
+                            right: { x: 1, y: 0.5, d: "left" },
+                            center: { x: 0.5, y: 0.5, d: Config.visualizerDirection }
+                        };
+                        const p = presets[value];
+                        Config.visualizerX = p.x;
+                        Config.visualizerY = p.y;
+                        Config.visualizerDirection = p.d;
+                    }
+                }
+                ChoiceRow {
+                    icon: "explore"
+                    title: "Dirección"
+                    description: "Hacia dónde crecen las barras"
+                    current: Config.visualizerDirection
+                    options: [
+                        { value: "up", label: "", icon: "arrow_upward" },
+                        { value: "down", label: "", icon: "arrow_downward" },
+                        { value: "left", label: "", icon: "arrow_back" },
+                        { value: "right", label: "", icon: "arrow_forward" }
+                    ]
+                    onChosen: value => Config.visualizerDirection = value
+                }
+                SliderRow {
+                    icon: "straighten"
+                    title: "Largo"
+                    description: "Qué parte del borde de la pantalla ocupa"
+                    value: Config.visualizerLength
+                    from: 0.15
+                    to: 1
+                    stepSize: 0.01
+                    display: v => Math.round(v * 100) + "%"
+                    onMoved: value => Config.visualizerLength = value
                 }
             }
 
@@ -884,6 +967,20 @@ PanelWindow {
                     title: "Escritorios"
                     checked: Config.barShowWorkspaces
                     onToggled: value => Config.barShowWorkspaces = value
+                }
+                ChoiceRow {
+                    icon: "format_list_numbered"
+                    title: "Rótulos de escritorios"
+                    description: "Cómo se ve cada escritorio en la barra"
+                    current: Config.barWorkspaceStyle
+                    options: [
+                        { value: "numbers", label: "1 2 3" },
+                        { value: "roman", label: "I II III" },
+                        { value: "kanji", label: "一 二 三" },
+                        { value: "dots", label: "• • •" },
+                        { value: "pacman", label: "Pac-Man" }
+                    ]
+                    onChosen: value => Config.barWorkspaceStyle = value
                 }
                 SwitchRow {
                     icon: "web_asset"

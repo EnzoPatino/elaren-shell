@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell.Widgets
 import "../../theme"
 import "../../components"
 import "../../services"
@@ -37,6 +38,40 @@ Rectangle {
         Behavior on opacity { Anim { duration: Theme.anim.fast } }
     }
 
+    // Destello que cruza la píldora una vez al entrar el ratón (no queda
+    // ninguna animación corriendo después), recortado a sus esquinas.
+    ClippingRectangle {
+        anchors.fill: parent
+        radius: root.radius
+        color: "transparent"
+
+        Rectangle {
+            id: shine
+            y: -parent.height
+            width: parent.height * 0.9
+            height: parent.height * 3
+            rotation: 20
+            x: -width * 2
+            opacity: 0.55
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: "transparent" }
+                GradientStop { position: 0.5; color: Qt.alpha("white", 0.55) }
+                GradientStop { position: 1; color: "transparent" }
+            }
+
+            Anim {
+                id: shineAnim
+                target: shine
+                property: "x"
+                from: -shine.width * 2
+                to: root.width + shine.width
+                duration: Theme.anim.extraSlow
+                easing.bezierCurve: Theme.anim.emphasizedDecel
+            }
+        }
+    }
+
     Row {
         id: content
         anchors.centerIn: parent
@@ -69,6 +104,7 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
+        onContainsMouseChanged: if (containsMouse && Theme.anim.scale > 0) shineAnim.restart()
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         // Clic izquierdo: lanzador. Clic derecho: Configuración.
         onClicked: event => event.button === Qt.RightButton ? Settings.toggle() : AppLauncher.toggle()

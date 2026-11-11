@@ -17,9 +17,18 @@ function isTaskWindow(w) {
     return w.normalWindow && !w.skipTaskbar;
 }
 
+// Spectacle mostrando su selector de región / pantalla completa (no la
+// ventana del editor). Elaren oculta sus popups mientras tanto: son
+// xdg_popup y KWin los pinta por encima de cualquier ventana.
+function isScreenshotOverlay(w) {
+    const id = (w.desktopFileName || "") + " " + (w.resourceClass || "");
+    return /spectacle/i.test(id) && (w.fullScreen || w.skipTaskbar || !w.normalWindow);
+}
+
 function push() {
     const active = workspace.activeWindow;
     const state = {
+        screenshot: workspace.windowList().some(isScreenshotOverlay),
         desktops: workspace.desktops.map(d => ({ id: d.id, name: d.name })),
         currentDesktop: workspace.currentDesktop ? workspace.currentDesktop.id : "",
         active: active ? active.internalId.toString() : "",
@@ -33,6 +42,7 @@ function watch(w) {
     w.minimizedChanged.connect(push);
     w.desktopsChanged.connect(push);
     w.skipTaskbarChanged.connect(push);
+    w.fullScreenChanged.connect(push);
 }
 
 workspace.windowList().forEach(watch);

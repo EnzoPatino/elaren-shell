@@ -4,9 +4,12 @@ import "../../theme"
 import "../../components"
 import "../../services"
 
-// Reloj central: horas y minutos con dígitos que ruedan, los dos puntos
-// "respiran" con cada segundo y la fecha va aparte. Al pasar el ratón
-// aparecen los segundos. Clic: calendario.
+// Reloj central: horas y minutos con dígitos que ruedan y la fecha aparte.
+// Al pasar el ratón aparecen los segundos y los dos puntos "respiran" con
+// cada uno. Clic: calendario.
+//
+// El pulso va solo con el ratón encima: animarlo siempre obligaba a la barra
+// entera a redibujarse ~60 % del tiempo.
 BarGroup {
     id: root
 
@@ -24,14 +27,8 @@ BarGroup {
         enabled: hover.hovered
     }
 
-    // Pulso de un segundo para los dos puntos
-    property bool tick: false
-    Timer {
-        interval: 1000
-        repeat: true
-        running: Theme.anim.scale > 0
-        onTriggered: root.tick = !root.tick
-    }
+    // Pulso de un segundo para los dos puntos (sincronizado con los segundos)
+    readonly property bool tick: hover.hovered && Theme.anim.scale > 0 && seconds.date.getSeconds() % 2 === 1
 
     Row {
         anchors.verticalCenter: parent.verticalCenter

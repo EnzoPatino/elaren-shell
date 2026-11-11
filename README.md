@@ -86,6 +86,35 @@ qs ipc -p ~/proyectos/elaren-shell/shell.qml call visualizer setStyle wave
 Con cava instalado muestra el espectro real; sin cava, barras moduladas por el
 nivel de audio real de PipeWire.
 
+**Ubicación**: va en cualquier lugar de la pantalla y las barras pueden crecer
+hacia arriba, abajo, izquierda o derecha. En Configuración → Visualizador →
+Ubicación hay atajos (abajo, arriba, a los costados, al centro), la dirección
+y el largo; con **Mover** (o `call visualizer place`) se acomoda con el ratón:
+arrastrar para moverlo (con imán a bordes y centro), rueda para el largo, clic
+derecho para girarlo. Esc o "Listo" termina. Sin música muestra una demo
+mientras tanto.
+
+```bash
+qs ipc -p ~/proyectos/elaren-shell/shell.qml call visualizer place
+qs ipc -p ~/proyectos/elaren-shell/shell.qml call visualizer setDirection left
+```
+
+## Bloquear y apagar
+
+Bloquear, suspender, cerrar sesión, reiniciar y apagar tienen una animación a
+pantalla completa antes de ejecutarse (Esc o clic la cancelan mientras tanto):
+el candado se cierra, la luna se mece, la mano saluda, la flecha gira o la
+pantalla se apaga como un televisor de tubo. Al desbloquear la sesión (venga
+el bloqueo de donde venga) la pantalla se abre en iris con un "Hola de nuevo".
+
+Los botones del lanzador ya las usan. Para los atajos de KDE (Meta+L, botón de
+encendido…), asigná en Atajos → Añadir comando:
+
+```bash
+qs ipc -p ~/proyectos/elaren-shell/shell.qml call power lock      # suspend, logout, reboot, poweroff
+qs ipc -p ~/proyectos/elaren-shell/shell.qml call power preview poweroff   # solo la animación
+```
+
 ## Lanzador de aplicaciones
 
 Panel a pantalla completa con buscador, secciones (Todas, Frecuentes, Juegos,
@@ -132,17 +161,38 @@ el estado por D-Bus, y Elaren lo lee de la salida del helper. Las órdenes
 (activar, minimizar, cambiar de escritorio) se ejecutan como scripts de KWin
 de un solo uso. Requiere `python3-gi`.
 
+### Capturas de pantalla
+
+Mientras Spectacle muestra su selector, los popups de la barra (reproductor,
+calendario, sistema) se ocultan al instante: si no, KWin los pinta por encima
+del selector. Como Spectacle congela la pantalla antes de mostrar el selector,
+para que el popup tampoco salga en la foto conviene lanzar la captura desde
+Elaren, que primero cierra los popups y después abre Spectacle. En
+Configuración del sistema → Atajos, asigná a Impr Pant un comando como:
+
+```sh
+qs ipc -p ~/proyectos/elaren-shell/shell.qml call screenshot region
+```
+
+(también `fullscreen`, `window` y `monitor`), y quitale ese atajo a Spectacle.
+
 ## Animaciones
 
 - **Entrada**: la barra cae desde arriba con rebote y los grupos aparecen
   escalonados (también en cada recarga en caliente).
 - **Escritorios**: el indicador se desplaza con efecto "gusano".
+  Rótulos a elección (Configuración → Barra superior): números, romanos
+  (I II III), kanji (一 二 三), solo puntos o **Pac-Man** (el activo es un
+  pacman que viaja comiendo al cambiar de escritorio, los que tienen ventanas
+  son fantasmas que lo siguen con la mirada y los vacíos, pellets; idea del
+  estilo "Caelestia" de [neko-desktops](https://github.com/ezku100/neko-desktops),
+  dibujado desde cero). Al cambiar de estilo giran en cascada.
 - **Reloj**: los dígitos ruedan como un marcador mecánico.
 - **Calendario**: se despliega con rebote, desliza la cuadrícula al cambiar de
   mes y se cierra al sacar el ratón.
 - **Multimedia**: la carátula gira mientras suena; los controles se despliegan.
 - **Volumen**: el deslizador aparece al pasar el ratón o al cambiar el volumen.
-- **Batería**: "late" mientras carga y avisa cuando está crítica.
+- **Batería**: "late" al enchufar el cargador y avisa cuando está crítica.
 - **Fondo**: zoom-out al arrancar, fundido al cambiar de imagen y paralaje
   al cambiar de escritorio.
 - **Dock**: sube con rebote, magnificación estilo macOS, iconos que entran
@@ -162,3 +212,11 @@ de un solo uso. Requiere `python3-gi`.
 - `theme/` — colores, tipografía, formas y curvas de movimiento (singleton `Theme`)
 
 Requiere la fuente **Material Symbols Rounded** para los iconos.
+
+## Guía local para agentes
+
+En la raíz del proyecto puede existir un `AGENTS.md` con instrucciones de
+desarrollo, mapa de módulos y notas sobre configuración y widgets. Es una guía
+local ignorada por Git, así que no se incluye ni aparece en GitHub. Si falta,
+consultá este README y los comentarios junto al código antes de cambiar una
+pieza.

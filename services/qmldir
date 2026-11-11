@@ -16,3 +16,4 @@ singleton Brightness 1.0 Brightness.qml
 singleton Caffeine 1.0 Caffeine.qml
 singleton Settings 1.0 Settings.qml
 singleton Weather 1.0 Weather.qml
+singleton Power 1.0 Power.qml

@@ -12,8 +12,10 @@ import "../theme"
 Item {
     id: root
 
-    property list<real> values: []
-    property list<real> caps: []
+    // Arrays de JS (no `list<real>`): cada barra indexa estos valores en cada
+    // cuadro, y una `list<real>` se copia entera en cada acceso.
+    property var values: []
+    property var caps: []
     property string style: "bars"
     // "cover"/"accent" usan `color`; "rainbow" pinta un arcoíris.
     property string colorMode: "accent"
@@ -23,7 +25,7 @@ Item {
     property bool showCaps: true
     property real lineWidth: 2.5
 
-    readonly property int count: values.length
+    readonly property int count: values?.length ?? 0
     readonly property bool rainbow: colorMode === "rainbow"
 
     function colorAt(fraction: real): color {
@@ -51,7 +53,8 @@ Item {
                 id: bar
 
                 required property int index
-                readonly property real value: root.values[index] ?? 0
+                // Con otro estilo activo las barras no se recalculan.
+                readonly property real value: barsLayer.visible ? (root.values[index] ?? 0) : 0
                 readonly property real fraction: index / Math.max(1, root.count - 1)
                 readonly property color tint: root.colorAt(fraction)
                 readonly property real barHeight: 3 + root.maxHeight * Math.min(1, value)
@@ -106,7 +109,7 @@ Item {
                     width: parent.width
                     height: 3
                     radius: 1.5
-                    y: parent.height - 4 - 3 - root.maxHeight * Math.min(1, root.caps[bar.index] ?? 0) - 6
+                    y: parent.height - 4 - 3 - root.maxHeight * Math.min(1, barsLayer.visible ? (root.caps[bar.index] ?? 0) : 0) - 6
                     color: Qt.lighter(bar.tint, 1.5)
                     opacity: 0.85
                 }
@@ -117,7 +120,8 @@ Item {
     // ── wave / mirror / line ──────────────────────────────────────────────
     // Curva suave (Catmull-Rom) a partir de los valores, con los extremos
     // atenuados para que la onda nazca y muera en los bordes.
-    function curve(samplesPerValue: int): list<var> {
+    function curve(samplesPerValue: int): var {
+        const values = Array.from(root.values ?? []);
         const n = values.length;
         if (n < 2) return [];
         const out = [];
@@ -140,6 +144,8 @@ Item {
     Shape {
         id: waveLayer
         anchors.fill: parent
+        // Triangula el relleno en un hilo aparte, no en el de la interfaz.
+        asynchronous: true
         opacity: root.style === "wave" || root.style === "mirror" || root.style === "line" ? 1 : 0
         visible: opacity > 0.01
 
@@ -149,18 +155,24 @@ Item {
         readonly property bool filled: root.style !== "line"
         readonly property real centerLine: isMirror ? height / 2 + (height - root.maxHeight) / 2 - 4 : height - 4
         readonly property real reach: isMirror ? root.maxHeight / 2 : root.maxHeight
-        readonly property list<var> curvePoints: visible ? root.curve(4) : []
-
         // PathPolyline no acepta una lista vacía: se usa un punto suelto.
         readonly property var empty: [Qt.point(0, height)]
 
-        function upperEdge() {
-            if (curvePoints.length === 0) return empty;
-            return curvePoints.map(p => Qt.point(p.x * width, centerLine - p.v * reach));
-        }
-        function lowerEdge() {
-            if (curvePoints.length === 0) return empty;
-            return curvePoints.map(p => Qt.point(p.x * width, centerLine + p.v * reach));
+        // Bordes calculados UNA vez por cuadro y compartidos por el relleno y
+        // las líneas (antes se recalculaban 2–4 veces cada uno).
+        readonly property var edges: {
+            if (!visible) return { upper: empty, lower: empty };
+            const points = root.curve(3);
+            if (points.length === 0) return { upper: empty, lower: empty };
+            const upper = new Array(points.length);
+            const lower = isMirror ? new Array(points.length) : null;
+            for (let k = 0; k < points.length; k++) {
+                const px = points[k].x * width;
+                const dv = points[k].v * reach;
+                upper[k] = Qt.point(px, centerLine - dv);
+                if (lower) lower[k] = Qt.point(px, centerLine + dv);
+            }
+            return { upper, lower: lower ?? empty };
         }
 
         // Relleno
@@ -171,8 +183,8 @@ Item {
             PathPolyline {
                 path: {
                     if (!waveLayer.filled) return waveLayer.empty;
-                    const top = waveLayer.upperEdge();
-                    if (waveLayer.isMirror) return top.concat(waveLayer.lowerEdge().reverse());
+                    const top = waveLayer.edges.upper;
+                    if (waveLayer.isMirror) return top.concat(waveLayer.edges.lower.slice().reverse());
                     return top.concat([Qt.point(waveLayer.width, waveLayer.height), Qt.point(0, waveLayer.height)]);
                 }
             }
@@ -186,7 +198,7 @@ Item {
             joinStyle: ShapePath.RoundJoin
             capStyle: ShapePath.RoundCap
 
-            PathPolyline { path: waveLayer.upperEdge() }
+            PathPolyline { path: waveLayer.edges.upper }
         }
 
         // En espejo, también la línea de abajo
@@ -197,7 +209,7 @@ Item {
             joinStyle: ShapePath.RoundJoin
             capStyle: ShapePath.RoundCap
 
-            PathPolyline { path: waveLayer.isMirror ? waveLayer.lowerEdge() : waveLayer.empty }
+            PathPolyline { path: waveLayer.isMirror ? waveLayer.edges.lower : waveLayer.empty }
         }
 
         LinearGradient {

@@ -7,6 +7,7 @@ import "modules/bar"
 import "modules/desktop"
 import "modules/dock"
 import "modules/launcher"
+import "modules/power"
 import "modules/settings"
 import "config"
 import "services"
@@ -51,6 +52,11 @@ ShellRoot {
             }
 
             Bar {
+                screen: perScreen.modelData
+            }
+
+            // Animaciones de bloquear / suspender / salir / reiniciar / apagar
+            PowerOverlay {
                 screen: perScreen.modelData
             }
 

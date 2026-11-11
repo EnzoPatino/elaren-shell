@@ -56,7 +56,7 @@ RowBase {
                     required property int index
                     readonly property bool selected: index === root.currentIndex
 
-                    width: content.implicitWidth + 24
+                    width: content.implicitWidth + (option.modelData.label ? 24 : 18)
                     height: 26
 
                     Row {
@@ -74,6 +74,7 @@ RowBase {
                         }
                         StyledText {
                             anchors.verticalCenter: parent.verticalCenter
+                            visible: text !== ""
                             text: option.modelData.label
                             font.pixelSize: Theme.font.small + 1
                             font.weight: option.selected ? Font.Bold : Font.Medium

@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Widgets
 import "../theme"
+import "../services"
 
 // Tarjeta desplegable bajo un elemento de la barra. Se abre con rebote,
 // se cierra acelerando y emite `dismissed` cuando el ratón sale un rato.
@@ -33,7 +34,15 @@ PopupWindow {
     implicitWidth: cardWidth + 16
     implicitHeight: card.height + 16
     color: "transparent"
-    visible: progress > 0.001
+    // Durante una captura de pantalla desaparece sin animación y se cierra.
+    visible: progress > 0.001 && !KWin.screenshotActive
+
+    Connections {
+        target: KWin
+        function onScreenshotActiveChanged(): void {
+            if (KWin.screenshotActive && root.open) root.dismissed();
+        }
+    }
 
     function updateProgress(): void {
         progressAnim.easing.bezierCurve = open ? Theme.anim.expressive : Theme.anim.emphasizedAccel;

@@ -20,6 +20,9 @@ Item {
     property real level: 0
     // Avance del tema (0..1): el brazo recorre el disco del borde al centro.
     property real progress: 0
+    // Con la vista oculta no se anima nada (la ventana del popup sigue
+    // existiendo aunque esté cerrada y el reloj de animación seguiría corriendo).
+    property bool active: true
 
     signal scratched(int direction)
     signal clicked()
@@ -42,7 +45,7 @@ Item {
     }
 
     FrameAnimation {
-        running: root.speed > 0.001 && Theme.anim.scale > 0
+        running: root.active && root.speed > 0.001 && Theme.anim.scale > 0
         onTriggered: disc.rotation = (disc.rotation + frameTime * 140 * root.speed) % 360
     }
 

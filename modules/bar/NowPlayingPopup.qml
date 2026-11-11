@@ -60,13 +60,16 @@ AnimatedPopup {
     PwObjectTracker { objects: [Pipewire.defaultAudioSink] }
 
     // Tiempo y nivel suavizado (ataque rápido, caída lenta) para las barras.
+    // Solo corre con la tarjeta visible y con algo que animar: en pausa, una
+    // vez que las barras bajaron, se detiene y la tarjeta queda estática.
     property real clock: 0
     FrameAnimation {
-        running: root.visible && Theme.anim.scale > 0
+        running: root.visible && Theme.anim.scale > 0 && (Media.playing || root.level > 0.002)
         onTriggered: {
             root.clock += frameTime;
             const target = Media.playing ? Math.min(1, peaks.peak * 1.4) : 0;
-            root.level += (target - root.level) * (target > root.level ? 0.45 : 0.08);
+            const next = root.level + (target - root.level) * (target > root.level ? 0.45 : 0.08);
+            root.level = next < 0.002 && !Media.playing ? 0 : next;
         }
     }
 
@@ -78,15 +81,18 @@ AnimatedPopup {
             source: Media.artUrl
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
-            sourceSize: Qt.size(320, 320)
+            // Basta una miniatura: se va a difuminar igual y el desenfoque
+            // sobre una textura chica cuesta mucho menos.
+            sourceSize: Qt.size(96, 96)
             visible: false
         },
         MultiEffect {
             anchors.fill: parent
+            visible: root.visible
             source: backdrop
             blurEnabled: true
             blur: 1
-            blurMax: 64
+            blurMax: 32
             saturation: 0.15
             opacity: backdrop.status === Image.Ready ? 0.5 : 0
 
@@ -120,18 +126,19 @@ AnimatedPopup {
 
                 Rectangle {
                     required property int index
-                    readonly property real wave: 0.5 + 0.5 * Math.sin(root.clock * (2.1 + (index % 7) * 0.37) + index * 0.9)
                     readonly property real shape: 0.35 + 0.65 * Math.sin(Math.PI * (index + 0.5) / spectrum.count)
-                    readonly property real value: spectrum.real ? Visualizer.bars[index] : root.level * wave * shape
+                    // Con cava solo depende de sus datos; la onda sintética (que
+                    // lee el reloj en cada cuadro) se evalúa únicamente sin cava.
+                    readonly property real value: spectrum.real ? Visualizer.bars[index]
+                        : root.level * (0.5 + 0.5 * Math.sin(root.clock * (2.1 + (index % 7) * 0.37) + index * 0.9)) * shape
 
                     anchors.bottom: parent.bottom
                     width: (root.cardWidth - 4) / spectrum.count - spectrum.spacing
                     height: 2 + spectrum.maxHeight * Math.min(1, value)
                     radius: width / 2
-                    gradient: Gradient {
-                        GradientStop { position: 0; color: Qt.lighter(root.accent, 1.25) }
-                        GradientStop { position: 1; color: root.accent }
-                    }
+                    // Color liso: con decenas de barras cambiando de alto en
+                    // cada cuadro, el degradado por barra era lo más caro.
+                    color: root.accent
                 }
             }
         }
@@ -147,6 +154,7 @@ AnimatedPopup {
             height: 200
             anchors.verticalCenter: parent.verticalCenter
             spinning: Media.playing
+            active: root.visible
             cover: Media.artUrl
             accent: root.accent
             level: root.level
@@ -493,7 +501,7 @@ AnimatedPopup {
             highlightMoveDuration: 600
             highlightMoveVelocity: -1
 
-            layer.enabled: true
+            layer.enabled: view.visible
             layer.effect: MultiEffect {
                 maskEnabled: true
                 maskSource: fadeMask

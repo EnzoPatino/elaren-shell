@@ -64,6 +64,9 @@ core.*
 .kdev4/
 *.kdev4
 
+# Instrucciones locales para agentes; no publicar en el repositorio
+/AGENTS.md
+
 # Archivos del sistema
 .DS_Store
 ._*

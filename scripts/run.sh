@@ -91,6 +91,59 @@ fi
 
 trap skwd_restore EXIT
 
+# ── Arranque ordenado ────────────────────────────────────────────────────────
+# Al iniciar sesión, el autoarranque puede lanzar Elaren antes de que KWin y sus
+# scripts terminen de inicializar. Si en ese momento hay un tiler (Krohnkite)
+# activo, "acomoda" la barra y el dock como si fueran ventanas y aparecen en el
+# medio de la pantalla. Por eso: 1) se asegura que Krohnkite ignore a Quickshell
+# y a las superficies de fondo de skwd, y 2) se espera a que KWin responda.
+
+kwin_ready() { busctl --user status org.kde.KWin >/dev/null 2>&1; }
+
+# Agrega clases a la lista separada por comas sin duplicar.
+merge_classes() {
+    python3 -c '
+import sys
+current = [c.strip() for c in sys.argv[1].split(",") if c.strip()]
+for c in sys.argv[2:]:
+    if c not in current:
+        current.append(c)
+print(",".join(current))
+' "$@"
+}
+
+ensure_krohnkite() {
+    [[ $(kreadconfig6 --file kwinrc --group Plugins --key krohnkiteEnabled 2>/dev/null) == true ]] || return 0
+    local changed=0 ignore wanted layer
+    ignore=$(kreadconfig6 --file kwinrc --group Script-krohnkite --key ignoreClass 2>/dev/null)
+    wanted=$(merge_classes "$ignore" quickshell skwd-paper-v2 skwd-wall-vk skwd-wall-still)
+    if [[ $wanted != "$ignore" ]]; then
+        kwriteconfig6 --file kwinrc --group Script-krohnkite --key ignoreClass "$wanted"
+        changed=1
+    fi
+    # Ventanas en mosaico en la capa normal: en la capa "debajo" (el valor por
+    # defecto de Krohnkite) se mezclan con los widgets de escritorio.
+    layer=$(kreadconfig6 --file kwinrc --group Script-krohnkite --key tiledWindowsLayer 2>/dev/null)
+    if [[ $layer != 1 ]]; then
+        kwriteconfig6 --file kwinrc --group Script-krohnkite --key tiledWindowsLayer 1
+        changed=1
+    fi
+    if [[ $changed == 1 ]]; then
+        echo "elaren: ajusté Krohnkite para que no acomode la barra ni los widgets" >&2
+        busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure >/dev/null 2>&1
+        sleep 1
+    fi
+}
+
+for ((tries = 0; tries < 100; tries++)); do
+    kwin_ready && break
+    sleep 0.2
+done
+ensure_krohnkite
+# Un instante para que la pantalla y los scripts de KWin se asienten antes de
+# crear la barra, el dock y los widgets. ELAREN_START_DELAY=0 lo desactiva.
+sleep "${ELAREN_START_DELAY:-1.5}"
+
 # Quickshell en segundo plano para poder reenviarle las señales y restaurar
 # skwd-walld aunque nos maten con SIGTERM.
 quickshell -p "$PWD/shell.qml" "$@" &

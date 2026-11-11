@@ -445,7 +445,7 @@ PanelWindow {
                 add: Transition {
                     SequentialAnimation {
                         PropertyAction { property: "opacity"; value: 0 }
-                        PauseAnimation { duration: Math.min(ViewTransition.index, 24) * 14 * Theme.anim.scale }
+                        PauseAnimation { duration: Math.max(0, Math.min(ViewTransition.index, 24)) * 14 * Theme.anim.scale }
                         ParallelAnimation {
                             Anim { property: "opacity"; to: 1 }
                             Anim { property: "scale"; from: 0.8; to: 1; duration: Theme.anim.slow; easing.bezierCurve: Theme.anim.expressive }
@@ -587,10 +587,10 @@ PanelWindow {
 
         Repeater {
             model: [
-                { id: "lock", icon: "lock", label: "Bloquear", confirm: false, command: ["loginctl", "lock-session"] },
-                { id: "logout", icon: "logout", label: "¿Salir?", confirm: true, command: ["qdbus6", "org.kde.Shutdown", "/Shutdown", "org.kde.Shutdown.logout"] },
-                { id: "reboot", icon: "restart_alt", label: "¿Reiniciar?", confirm: true, command: ["systemctl", "reboot"] },
-                { id: "poweroff", icon: "power_settings_new", label: "¿Apagar?", confirm: true, command: ["systemctl", "poweroff"] }
+                { id: "lock", icon: "lock", label: "Bloquear", confirm: false },
+                { id: "logout", icon: "logout", label: "¿Salir?", confirm: true },
+                { id: "reboot", icon: "restart_alt", label: "¿Reiniciar?", confirm: true },
+                { id: "poweroff", icon: "power_settings_new", label: "¿Apagar?", confirm: true }
             ]
 
             Rectangle {
@@ -638,7 +638,8 @@ PanelWindow {
                         }
                         powerRow.armed = "";
                         AppLauncher.hide();
-                        Quickshell.execDetached(action.command);
+                        // Con animación previa (ver services/Power.qml)
+                        Power.run(action.id);
                     }
                 }
             }

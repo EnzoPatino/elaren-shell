@@ -30,6 +30,15 @@ Singleton {
     property alias visualizerBarWidth: store.visualizerBarWidth
     // Multiplicador de sensibilidad (cuánto "saltan")
     property alias visualizerGain: store.visualizerGain
+    // Ubicación: posición (fracción del espacio libre, 0..1, como los
+    // widgets), largo (fracción del borde de la pantalla a lo largo de las
+    // barras) y hacia dónde crecen las barras: "up" | "down" | "left" | "right".
+    // Se acomoda con el ratón: Configuración → Visualizador → "Mover", o
+    // qs ipc -p <ruta>/shell.qml call visualizer place
+    property alias visualizerX: store.visualizerX
+    property alias visualizerY: store.visualizerY
+    property alias visualizerLength: store.visualizerLength
+    property alias visualizerDirection: store.visualizerDirection
 
     // ── Apariencia ────────────────────────────────────────────────────────
     // Ver Theme.accentPresets
@@ -67,6 +76,8 @@ Singleton {
 
     // ── Barra superior ────────────────────────────────────────────────────
     property alias barShowWorkspaces: store.barShowWorkspaces
+    // Cómo se rotulan los escritorios: "numbers" | "roman" | "kanji" | "dots"
+    property alias barWorkspaceStyle: store.barWorkspaceStyle
     property alias barShowActiveWindow: store.barShowActiveWindow
     property alias barShowSystem: store.barShowSystem
     property alias barShowMedia: store.barShowMedia
@@ -114,9 +125,14 @@ Singleton {
         visualizerCaps: true,
         visualizerBarWidth: 0.62,
         visualizerGain: 1.0,
+        visualizerX: 0.5,
+        visualizerY: 1.0,
+        visualizerLength: 0.92,
+        visualizerDirection: "up",
         accent: "blue",
         animationScale: 1.0,
         barShowWorkspaces: true,
+        barWorkspaceStyle: "numbers",
         barShowActiveWindow: true,
         barShowSystem: true,
         barShowMedia: true,
@@ -185,11 +201,16 @@ Singleton {
             property bool visualizerCaps: true
             property real visualizerBarWidth: 0.62
             property real visualizerGain: 1.0
+            property real visualizerX: 0.5
+            property real visualizerY: 1.0
+            property real visualizerLength: 0.92
+            property string visualizerDirection: "up"
 
             property string accent: "blue"
             property real animationScale: 1.0
 
             property bool barShowWorkspaces: true
+            property string barWorkspaceStyle: "numbers"
             property bool barShowActiveWindow: true
             property bool barShowSystem: true
             property bool barShowMedia: true
