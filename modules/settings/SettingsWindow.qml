@@ -959,6 +959,183 @@ PanelWindow {
             spacing: 20
 
             SettingsCard {
+                title: "Ubicación"
+                icon: "dock_to_bottom"
+
+                ChoiceRow {
+                    icon: "toolbar"
+                    title: "Posición de la barra"
+                    description: "Elegí el borde donde querés tenerla"
+                    current: Config.barPosition
+                    options: [
+                        { value: "top", label: "Arriba", icon: "vertical_align_top" },
+                        { value: "bottom", label: "Abajo", icon: "vertical_align_bottom" },
+                        { value: "left", label: "Izquierda", icon: "align_horizontal_left" },
+                        { value: "right", label: "Derecha", icon: "align_horizontal_right" }
+                    ]
+                    onChosen: value => Config.barPosition = value
+                }
+
+                Item {
+                    width: parent.width
+                    height: 84
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 150
+                        height: 72
+                        radius: Theme.radius.normal
+                        color: Theme.surfaceContainer
+                        border.width: 1
+                        border.color: Theme.outline
+
+                        Rectangle {
+                            x: Config.barPosition === "left" ? 5 : Config.barPosition === "right" ? parent.width - width - 5 : 13
+                            y: Config.barPosition === "top" ? 5 : Config.barPosition === "bottom" ? parent.height - height - 5 : 13
+                            width: Config.barPosition === "left" || Config.barPosition === "right" ? 5 : parent.width - 26
+                            height: Config.barPosition === "left" || Config.barPosition === "right" ? parent.height - 26 : 5
+                            radius: 3
+                            color: Theme.primary
+
+                            Behavior on x { Anim { duration: Theme.anim.normal } }
+                            Behavior on y { Anim { duration: Theme.anim.normal } }
+                        }
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: 34
+                            height: 24
+                            radius: 5
+                            color: Qt.alpha(Theme.text, 0.08)
+                            border.width: 1
+                            border.color: Qt.alpha(Theme.text, 0.1)
+                        }
+                    }
+
+                    StyledText {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "VISTA PREVIA"
+                        color: Theme.textMuted
+                        font.pixelSize: 9
+                        font.weight: Font.Bold
+                        font.letterSpacing: 1.1
+                    }
+                }
+            }
+
+            SettingsCard {
+                title: "Isla central"
+                icon: "account_circle"
+
+                ChoiceRow {
+                    icon: "align_horizontal_center"
+                    title: "Qué va en el medio"
+                    description: "La barra entera, o el avatar con el reloj"
+                    current: Config.barAlignment
+                    options: [
+                        { value: "center", label: "Barra" },
+                        { value: "clock", label: "Reloj" }
+                    ]
+                    onChosen: value => Config.barAlignment = value
+                }
+                SwitchRow {
+                    icon: "account_circle"
+                    title: "Avatar"
+                    description: "Junto al reloj"
+                    checked: Config.barShowAvatar
+                    onToggled: value => Config.barShowAvatar = value
+                }
+                SwitchRow {
+                    icon: "ads_click"
+                    title: "El avatar sigue al cursor"
+                    checked: Config.barAvatarFollow
+                    onToggled: value => Config.barAvatarFollow = value
+                }
+                SwitchRow {
+                    icon: "history"
+                    title: "Recordar la última pestaña"
+                    description: "Si está apagado, la isla siempre abre en Inicio"
+                    checked: Config.barIslandRemember
+                    onToggled: value => Config.barIslandRemember = value
+                }
+            }
+
+            SettingsCard {
+                title: "Pestañas de la isla"
+                icon: "tab"
+
+                SwitchRow {
+                    icon: "album"
+                    title: "Música"
+                    description: "Solo aparece si hay un reproductor activo"
+                    checked: Config.barTabMusic
+                    onToggled: value => Config.barTabMusic = value
+                }
+                SwitchRow {
+                    icon: "monitor_heart"
+                    title: "Recursos"
+                    description: "CPU, memoria, red, GPU y sensores"
+                    checked: Config.barTabSystem
+                    onToggled: value => Config.barTabSystem = value
+                }
+                SwitchRow {
+                    icon: "apps"
+                    title: "Bandeja"
+                    description: "Apps de la bandeja del sistema"
+                    checked: Config.barTabTray
+                    onToggled: value => Config.barTabTray = value
+                }
+                SwitchRow {
+                    icon: "calendar_month"
+                    title: "Calendario"
+                    checked: Config.barTabCalendar
+                    onToggled: value => Config.barTabCalendar = value
+                }
+            }
+
+            SettingsCard {
+                title: "Avatar"
+                icon: "face"
+
+                ChoiceRow {
+                    icon: "image"
+                    title: "Imagen"
+                    description: Config.barAvatarSource === "face" ? "Tu foto de ~/.face (la de tu usuario de Plasma)"
+                        : Config.barAvatarSource === "plasma" ? "Uno de los avatares que trae Plasma"
+                        : "Un personaje dibujado por la shell; sus ojos siguen al cursor"
+                    current: Config.barAvatarSource
+                    options: [
+                        { value: "drawn", label: "Dibujado" },
+                        { value: "plasma", label: "Galería" },
+                        { value: "face", label: "Mi foto" }
+                    ]
+                    onChosen: value => Config.barAvatarSource = value
+                }
+
+                DrawnAvatarPicker {
+                    visible: Config.barAvatarSource === "drawn"
+                }
+
+                AvatarPicker {
+                    visible: Config.barAvatarSource === "plasma"
+                }
+
+                ChoiceRow {
+                    icon: "interests"
+                    title: "Forma del avatar"
+                    current: Config.barAvatarShape
+                    options: [
+                        { value: "circle", label: "Círculo" },
+                        { value: "squircle", label: "Squircle" },
+                        { value: "flower", label: "Flor" },
+                        { value: "hexagon", label: "Hexágono" }
+                    ]
+                    onChosen: value => Config.barAvatarShape = value
+                }
+            }
+
+            SettingsCard {
                 title: "Módulos"
                 icon: "view_module"
 
@@ -988,25 +1165,6 @@ PanelWindow {
                     description: "Icono y título de la ventana enfocada"
                     checked: Config.barShowActiveWindow
                     onToggled: value => Config.barShowActiveWindow = value
-                }
-                SwitchRow {
-                    icon: "memory"
-                    title: "Sistema"
-                    description: "CPU, memoria y temperatura"
-                    checked: Config.barShowSystem
-                    onToggled: value => Config.barShowSystem = value
-                }
-                SwitchRow {
-                    icon: "music_note"
-                    title: "Música"
-                    checked: Config.barShowMedia
-                    onToggled: value => Config.barShowMedia = value
-                }
-                SwitchRow {
-                    icon: "apps"
-                    title: "Bandeja del sistema"
-                    checked: Config.barShowTray
-                    onToggled: value => Config.barShowTray = value
                 }
             }
 

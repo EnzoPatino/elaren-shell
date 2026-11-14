@@ -89,7 +89,7 @@ PanelWindow {
     property bool lingering: false
     readonly property bool desktopEmpty: KWin.connected
         && KWin.windowsOn(KWin.currentDesktop).every(w => w.minimized)
-    readonly property bool shown: !Config.dockAutoHide || hovering || lingering || peeking || desktopEmpty
+    readonly property bool shown: !Config.dockAutoHide || hovering || lingering || peeking
 
     anchors {
         bottom: true

@@ -20,12 +20,6 @@ ShellRoot {
     // Panel de Configuración (engranaje del lanzador o clic derecho en "Apps")
     SettingsWindow {}
 
-    // Widgets de escritorio (reloj, saludo, música, sistema, clima) en la
-    // pantalla principal. Se activan en Configuración → Widgets.
-    DesktopWidgets {
-        screen: Quickshell.screens[0]
-    }
-
     Variants {
         model: Quickshell.screens
 
@@ -33,6 +27,12 @@ ShellRoot {
             id: perScreen
 
             required property var modelData
+
+            // Widgets de escritorio en cada pantalla conectada. Comparten
+            // las posiciones relativas guardadas en Configuración → Widgets.
+            DesktopWidgets {
+                screen: perScreen.modelData
+            }
 
             LazyLoader {
                 active: Wallpaper.drawsOwn
@@ -49,6 +49,12 @@ ShellRoot {
                 AudioVisualizer {
                     screen: perScreen.modelData
                 }
+            }
+
+            // La barra se dibuja a pantalla completa (para que la isla crezca
+            // libre); BarReserve es la que reserva su lugar a las ventanas.
+            BarReserve {
+                screen: perScreen.modelData
             }
 
             Bar {

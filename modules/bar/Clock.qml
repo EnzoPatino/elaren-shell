@@ -2,22 +2,26 @@ import QtQuick
 import Quickshell
 import "../../theme"
 import "../../components"
+import "../../config"
 import "../../services"
 
-// Reloj central: horas y minutos con dígitos que ruedan y la fecha aparte.
-// Al pasar el ratón aparecen los segundos y los dos puntos "respiran" con
-// cada uno. Clic: calendario.
+// Isla compacta del centro: avatar y reloj con dígitos que ruedan. Al pasar
+// el ratón aparecen los segundos y los dos puntos "respiran" con cada uno.
+// Clic: despliega la isla.
 //
 // El pulso va solo con el ratón encima: animarlo siempre obligaba a la barra
 // entera a redibujarse ~60 % del tiempo.
 BarGroup {
     id: root
 
-    property bool calendarOpen: false
+    property bool open: false
+    // Hacia dónde mira el avatar (lo calcula la barra según el cursor).
+    property real lookX: 0
+    property real lookY: 0
 
-    padding: Theme.spacing.large
+    padding: Config.barShowAvatar ? Theme.spacing.small : Theme.spacing.large
     clickable: true
-    color: calendarOpen ? Theme.groupActive : Theme.group
+    color: open ? Theme.groupActive : Theme.group
 
     HoverHandler { id: hover }
 
@@ -30,8 +34,23 @@ BarGroup {
     // Pulso de un segundo para los dos puntos (sincronizado con los segundos)
     readonly property bool tick: hover.hovered && Theme.anim.scale > 0 && seconds.date.getSeconds() % 2 === 1
 
+    // Al abrir la isla el avatar cabecea.
+    onOpenChanged: if (open) avatar.play("nod")
+
+    Avatar {
+        id: avatar
+        anchors.verticalCenter: parent.verticalCenter
+        visible: Config.barShowAvatar
+        width: Theme.bar.itemHeight - 6
+        height: width
+        shape: Config.barAvatarShape
+        lookX: root.lookX
+        lookY: root.lookY
+    }
+
     Row {
         anchors.verticalCenter: parent.verticalCenter
+        leftPadding: Config.barShowAvatar ? Theme.spacing.small : 0
         spacing: 1
 
         RollingText {
@@ -82,29 +101,13 @@ BarGroup {
         }
     }
 
-    // Divisor
-    Rectangle {
-        anchors.verticalCenter: parent.verticalCenter
-        width: 1
-        height: 14
-        color: Qt.alpha(Theme.text, 0.18)
-    }
-
-    StyledText {
-        anchors.verticalCenter: parent.verticalCenter
-        text: Time.shortDate
-        color: root.calendarOpen ? Theme.primary : Theme.textMuted
-        font.weight: Font.Medium
-        animate: true
-    }
-
     MaterialIcon {
         anchors.verticalCenter: parent.verticalCenter
         text: "expand_more"
         font.pixelSize: 16
         color: Theme.textMuted
         animateChange: false
-        rotation: root.calendarOpen ? 180 : 0
+        rotation: root.open ? 180 : 0
 
         Behavior on rotation { Anim { easing.bezierCurve: Theme.anim.expressive } }
     }

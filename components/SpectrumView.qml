@@ -144,8 +144,10 @@ Item {
     Shape {
         id: waveLayer
         anchors.fill: parent
-        // Triangula el relleno en un hilo aparte, no en el de la interfaz.
-        asynchronous: true
+        // Sin `asynchronous`: la curva cambia en cada cuadro y la triangulación
+        // en otro hilo se pisaba con la siguiente y tiraba abajo Quickshell
+        // (segfault en QtQuickShapes). Son pocas decenas de puntos; en el hilo
+        // de la interfaz no se nota.
         opacity: root.style === "wave" || root.style === "mirror" || root.style === "line" ? 1 : 0
         visible: opacity > 0.01
 

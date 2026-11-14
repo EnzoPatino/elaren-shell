@@ -7,31 +7,32 @@ import "../../theme"
 import "../../components"
 import "../../services"
 
-// Reproductor expandido: tarjeta flotante bajo el widget de música.
+// Reproductor expandido: vista "Música" (y "Letra") de la isla de la barra.
 //
 // - Toma el color de la portada (acento) y la usa difuminada de fondo.
 // - Vinilo con inercia y brazo; la rueda sobre el disco adelanta/retrocede 5 s.
 // - Barras y halo reaccionan al nivel de audio real de la salida (PipeWire).
 // - Progreso arrastrable con burbuja de tiempo; clic en la duración alterna
 //   entre total y restante.
-AnimatedPopup {
+InlineCard {
     id: root
 
     property bool showRemaining: false
     readonly property color accent: Media.accent
 
     // Modo letra: solo el disco, el visualizador y la letra sincronizada.
-    // Se recuerda entre aperturas.
+    // Se alterna con el botón de arriba a la derecha.
     property bool lyricsMode: false
     property real lyricsAmount: lyricsMode ? 1 : 0
     Behavior on lyricsAmount { Anim { duration: Theme.anim.slow; easing.bezierCurve: Theme.anim.emphasizedDecel } }
 
-    // cava y la búsqueda de letra solo trabajan con la tarjeta visible.
+    // cava y la búsqueda de letra solo trabajan con la vista visible. Al
+    // cerrar la isla el Loader destruye la vista y los Binding devuelven el
+    // valor anterior (falso).
     Binding {
         target: Visualizer
         property: "popupActive"
         value: root.visible
-        restoreMode: Binding.RestoreNone
     }
 
     Binding {

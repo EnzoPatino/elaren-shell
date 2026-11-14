@@ -72,7 +72,7 @@ Reveal {
                         visible: art.status !== Image.Ready
                         text: "music_note"
                         font.pixelSize: Theme.font.normal
-                        color: Theme.primary
+                        color: Media.accent
                     }
 
                     // Un pequeño halo acompaña la reproducción sin competir
@@ -82,7 +82,7 @@ Reveal {
                         radius: width / 2
                         color: "transparent"
                         border.width: 1
-                        border.color: Media.playing ? Qt.alpha(Theme.primary, 0.75) : "transparent"
+                        border.color: Media.playing ? Qt.alpha(Media.accent, 0.85) : "transparent"
                         opacity: Media.playing ? 1 : 0.45
 
                         Behavior on border.color { CAnim {} }
@@ -211,7 +211,7 @@ Reveal {
                     width: parent.width * Media.progress
                     height: 2
                     radius: 1
-                    color: Media.playing ? Theme.primary : Theme.textMuted
+                    color: Media.playing ? Media.accent : Theme.textMuted
 
                     Behavior on width { Anim { duration: 420; easing.bezierCurve: Theme.anim.emphasizedDecel } }
                     Behavior on color { CAnim {} }

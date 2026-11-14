@@ -5,11 +5,12 @@ import "../../theme"
 import "../../components"
 import "../../services"
 
-// Panel con gráficos de CPU, memoria y red, más sensores y tiempo encendido.
-AnimatedPopup {
+// Vista "Recursos" de la isla: gráficos de CPU, memoria y red, más sensores
+// y tiempo encendido.
+InlineCard {
     id: root
 
-    cardWidth: 340
+    cardWidth: 400
 
     component Chart: Column {
         id: chart

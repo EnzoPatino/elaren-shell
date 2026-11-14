@@ -75,18 +75,36 @@ Singleton {
     property alias widgetWeatherY: store.widgetWeatherY
 
     // ── Barra superior ────────────────────────────────────────────────────
+    // Borde de la pantalla: "top" | "bottom" | "left" | "right".
+    property alias barPosition: store.barPosition
     property alias barShowWorkspaces: store.barShowWorkspaces
     // Cómo se rotulan los escritorios: "numbers" | "roman" | "kanji" | "dots"
     property alias barWorkspaceStyle: store.barWorkspaceStyle
     property alias barShowActiveWindow: store.barShowActiveWindow
-    property alias barShowSystem: store.barShowSystem
-    property alias barShowMedia: store.barShowMedia
-    property alias barShowTray: store.barShowTray
     property alias barShowCaffeine: store.barShowCaffeine
     property alias barShowNetwork: store.barShowNetwork
     property alias barShowBrightness: store.barShowBrightness
     property alias barShowVolume: store.barShowVolume
     property alias barShowBattery: store.barShowBattery
+    // Forma del avatar de la isla central: "circle" | "squircle" | "flower" | "hexagon"
+    property alias barAvatarShape: store.barAvatarShape
+    // De dónde sale el avatar: "drawn" (dibujado por la shell a partir de una
+    // semilla) | "plasma" (galería de avatares de Plasma) | "face" (~/.face)
+    property alias barAvatarSource: store.barAvatarSource
+    // Semilla del avatar dibujado: el mismo texto siempre da el mismo personaje
+    property alias barAvatarSeed: store.barAvatarSeed
+    // Imagen elegida de /usr/share/plasma/avatars cuando la fuente es "plasma"
+    property alias barAvatarImage: store.barAvatarImage
+    // Qué queda en el medio de la pantalla: "center" (la barra entera) | "clock" (avatar y reloj)
+    property alias barAlignment: store.barAlignment
+    property alias barShowAvatar: store.barShowAvatar
+    property alias barAvatarFollow: store.barAvatarFollow
+    // Al abrir la isla: volver a la última pestaña en vez de Inicio
+    property alias barIslandRemember: store.barIslandRemember
+    property alias barTabMusic: store.barTabMusic
+    property alias barTabSystem: store.barTabSystem
+    property alias barTabTray: store.barTabTray
+    property alias barTabCalendar: store.barTabCalendar
 
     // ── Dock ──────────────────────────────────────────────────────────────
     property alias dockEnabled: store.dockEnabled
@@ -132,16 +150,26 @@ Singleton {
         accent: "blue",
         animationScale: 1.0,
         barShowWorkspaces: true,
+        barPosition: "top",
         barWorkspaceStyle: "numbers",
         barShowActiveWindow: true,
-        barShowSystem: true,
-        barShowMedia: true,
-        barShowTray: true,
         barShowCaffeine: true,
         barShowNetwork: true,
         barShowBrightness: true,
         barShowVolume: true,
         barShowBattery: true,
+        barAvatarShape: "squircle",
+        barAvatarSource: "drawn",
+        barAvatarSeed: "elaren",
+        barAvatarImage: "/usr/share/plasma/avatars/Konqi.png",
+        barAlignment: "center",
+        barShowAvatar: true,
+        barAvatarFollow: true,
+        barIslandRemember: false,
+        barTabMusic: true,
+        barTabSystem: true,
+        barTabTray: true,
+        barTabCalendar: true,
         widgetsLocked: false,
         widgetScale: 1.0,
         widgetCards: true,
@@ -210,16 +238,26 @@ Singleton {
             property real animationScale: 1.0
 
             property bool barShowWorkspaces: true
+            property string barPosition: "top"
             property string barWorkspaceStyle: "numbers"
             property bool barShowActiveWindow: true
-            property bool barShowSystem: true
-            property bool barShowMedia: true
-            property bool barShowTray: true
             property bool barShowCaffeine: true
             property bool barShowNetwork: true
             property bool barShowBrightness: true
             property bool barShowVolume: true
             property bool barShowBattery: true
+            property string barAvatarShape: "squircle"
+            property string barAvatarSource: "drawn"
+            property string barAvatarSeed: "elaren"
+            property string barAvatarImage: "/usr/share/plasma/avatars/Konqi.png"
+            property string barAlignment: "center"
+            property bool barShowAvatar: true
+            property bool barAvatarFollow: true
+            property bool barIslandRemember: false
+            property bool barTabMusic: true
+            property bool barTabSystem: true
+            property bool barTabTray: true
+            property bool barTabCalendar: true
 
             property bool widgetsLocked: false
             property real widgetScale: 1.0

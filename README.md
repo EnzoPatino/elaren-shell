@@ -19,20 +19,48 @@ ELAREN_ANIM_SCALE=2 ./scripts/run.sh
 
 ## La barra
 
+Una franja de vidrio centrada que mide lo que su contenido, en el borde que
+elijas (arriba, abajo o a un costado). En Configuración → Barra superior podés
+elegir que lo que quede en el medio sea el avatar con el reloj en vez de la
+barra entera.
+
 | Zona      | Módulo                | Interacción                                              |
 |-----------|-----------------------|----------------------------------------------------------|
 | Izquierda | Apps                  | Clic: abre el lanzador de aplicaciones                   |
 |           | Ventana activa        | Icono y título de la ventana enfocada                    |
 |           | Escritorios virtuales | Clic: cambiar · Rueda: siguiente/anterior                |
-| Centro    | Reloj                 | Clic: calendario (rueda: cambiar de mes)                 |
-| Derecha   | Sistema               | Hover: red · Clic: panel con gráficos de CPU/RAM/red, GPU, swap |
-|           | Multimedia (MPRIS)    | Hover: controles anterior / pausa / siguiente            |
-|           | Bandeja del sistema   | Clic: activar · Derecho: menú · Medio: acción secundaria |
-|           | Volumen y batería     | Rueda: ±5 % · Clic en icono: silenciar · Arrastrar: fijar|
+| Centro    | Avatar y reloj        | Clic: despliega la isla                                  |
+| Derecha   | Volumen y batería     | Rueda: ±5 % · Clic en icono: silenciar · Arrastrar: fijar|
+
+## La isla
+
+Clic en el avatar o el reloj: la isla crece desde la barra como una sola forma
+de vidrio. Arriba tiene pestañas:
+
+- **Inicio**: el avatar y el reloj en grande, con saludo y fecha.
+- **Música** y **Letra**: el reproductor (solo si hay uno activo). La música ya
+  no tiene widget propio en la barra: vive acá.
+- **Recursos**: gráficos de CPU, memoria y red, GPU, swap, sensores y tiempo
+  encendido.
+- **Bandeja**: las apps de la bandeja del sistema. Clic: activar · Derecho: menú
+  · Medio: acción secundaria.
+- **Calendario**: rueda para cambiar de mes, clic en un día para ver cuánto falta.
+
+Se cierra con un clic afuera, con Escape, con la flecha de la isla o volviendo a
+tocar el avatar. Abierta no empuja las ventanas. El avatar puede ser un personaje
+dibujado por la shell (generado a partir de una semilla, con ojos que siguen al
+cursor y parpadean; "Mezclar" propone otros), uno de la galería que trae Plasma
+(Konqi y compañía, en `/usr/share/plasma/avatars`) o tu foto de `~/.face`; su forma (círculo,
+squircle, flor o hexágono) se elige en Configuración → Barra superior. Ahí
+también se puede ocultar el avatar, hacer que no siga al cursor, que la isla
+recuerde la última pestaña y elegir qué pestañas mostrar.
+
+El botón con el joystick (**BETA**) es el futuro modo gaming: todavía no hace
+nada. Las alternativas para implementarlo están en `docs/propuesta-modo-gaming.md`.
 
 ## Reproductor
 
-Clic en el widget de música de la barra: tarjeta con vinilo (clic = pausa,
+Pestaña Música de la isla: vinilo (clic = pausa,
 rueda = ±5 s), progreso, controles, volumen y selector de reproductor. El botón
 de arriba a la derecha cambia al **modo letra**: solo el disco, el visualizador
 y la letra sincronizada (clic en una línea para saltar a ese momento).
@@ -190,7 +218,6 @@ qs ipc -p ~/proyectos/elaren-shell/shell.qml call screenshot region
 - **Reloj**: los dígitos ruedan como un marcador mecánico.
 - **Calendario**: se despliega con rebote, desliza la cuadrícula al cambiar de
   mes y se cierra al sacar el ratón.
-- **Multimedia**: la carátula gira mientras suena; los controles se despliegan.
 - **Volumen**: el deslizador aparece al pasar el ratón o al cambiar el volumen.
 - **Batería**: "late" al enchufar el cargador y avisa cuando está crítica.
 - **Fondo**: zoom-out al arrancar, fundido al cambiar de imagen y paralaje
