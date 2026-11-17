@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="176" viewBox="0 0 560 176" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Elaren</title>
+  <desc id="desc">Isotipo geométrico inspirado en una ventana abierta y una letra E, junto al nombre Elaren.</desc>
+  <defs>
+    <linearGradient id="aurora" x1="24" y1="20" x2="150" y2="152" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#55D6BE"/>
+    </linearGradient>
+    <linearGradient id="word" x1="203" y1="39" x2="449" y2="134" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#252238"/>
+      <stop offset="1" stop-color="#35564F"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(12 12)">
+    <path d="M76 3C36 3 4 35 4 75s32 72 72 72c24 0 46-12 59-30" stroke="url(#aurora)" stroke-width="9" stroke-linecap="round"/>
+    <path d="M42 48h58M42 76h45M42 104h58" stroke="url(#aurora)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M108 12v38M89 31h38" stroke="#F6F3FF" stroke-width="7" stroke-linecap="round" opacity=".95"/>
+    <circle cx="130" cy="130" r="5" fill="#55D6BE"/>
+  </g>
+  <text x="186" y="112" fill="url(#word)" font-family="Inter, Manrope, 'Segoe UI', sans-serif" font-size="76" font-weight="650" letter-spacing="-4">elaren</text>
+</svg>

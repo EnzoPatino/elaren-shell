@@ -1,7 +1,81 @@
 # Elaren
 
-Shell de escritorio para **KDE Plasma 6** (Wayland) escrita en QML con
-[Quickshell](https://quickshell.org).
+<p align="center">
+  <img src="branding/elaren.svg" alt="Logo de Elaren" width="210">
+</p>
+
+<p align="center"><strong>Una shell de escritorio para Wayland, hecha con Quickshell.</strong><br>
+Compatible con <strong>KDE Plasma 6</strong> y <strong>Hyprland</strong>.</p>
+
+Elaren reúne barra, lanzador, dock, widgets y controles del sistema en una
+interfaz QML configurable, con animaciones y acento de color compartido. En
+Plasma se integra con KWin; en Hyprland usa su backend nativo de Quickshell.
+
+> **Estado:** proyecto en desarrollo activo, todavía sin paquete ni instalador.
+> La instalación actual es desde el código fuente y está dirigida a personas
+> familiarizadas con una sesión Wayland.
+
+## Compatibilidad
+
+| Entorno | Compatibilidad | Integración disponible |
+|---|---|---|
+| KDE Plasma 6 sobre Wayland | Compatible | Ventanas y escritorios de KWin, bandeja del sistema, fondo de Plasma y pantalla de bloqueo opcional para kscreenlocker |
+| Hyprland | Compatible | Ventanas y escritorios mediante `Quickshell.Hyprland`, capturas con `grim`/`slurp` |
+| X11 u otros compositores | No documentado ni verificado | No se ofrece soporte por ahora |
+
+Elaren es una shell complementaria ejecutada por Quickshell: no reemplaza
+`plasmashell` ni configura Hyprland por vos. En Plasma, el escritorio y sus
+servicios siguen siendo de Plasma; podés ejecutar Elaren junto a ellos.
+
+## Requisitos
+
+- Una sesión Wayland en KDE Plasma 6 o Hyprland.
+- [Quickshell](https://quickshell.org) con Qt 6 y los módulos que usa el
+  proyecto; para Hyprland, una compilación que incluya `Quickshell.Hyprland`.
+- Python 3 y Bash.
+- La fuente **Material Symbols Rounded** para los iconos.
+
+Para la integración completa con KWin también se necesita `python3-gi` y un
+bus de sesión D-Bus funcional. Las funciones opcionales pueden requerir:
+
+| Función | Dependencia opcional |
+|---|---|
+| Espectro de audio preciso | `cava` (sin él se usa el nivel de audio de PipeWire) |
+| Modo gaming automático por juego | Feral GameMode (`gamemode`) |
+| Capturas en Hyprland | `grim`; `slurp` para seleccionar una región; `wl-copy` y `notify-send` para extras |
+| Pantalla de bloqueo de Elaren | KDE Plasma 6, `kscreenlocker` y `systemd --user` |
+| Clima y letras | Conexión a internet cuando se consultan |
+
+## Inicio rápido
+
+Cloná el proyecto en una ruta permanente, instalá Quickshell y las dependencias
+que quieras usar. Desde el directorio del proyecto, ejecutá:
+
+```bash
+./scripts/run.sh
+```
+
+El comando corre en primer plano y recarga la shell al guardar archivos. Para
+cerrarla, usá `Ctrl+C`. Para iniciarla automáticamente en cada sesión, agregá
+`scripts/run.sh` a las aplicaciones de inicio de tu entorno; no hay todavía un
+instalador que configure ese paso.
+
+En KDE Plasma, la pantalla de bloqueo se activa por separado desde
+Configuración → Bloqueo o con `scripts/lockscreen.sh install`; sus detalles y
+desinstalación están en la sección [Pantalla de bloqueo](#pantalla-de-bloqueo).
+
+## Contenido
+
+- [Desarrollo](#desarrollo)
+- [Barra e isla](#la-barra)
+- [Lanzador, dock y escritorio](#lanzador-de-aplicaciones)
+- [Reproductor y visualizador](#reproductor)
+- [Modo gaming](#modo-gaming)
+- [Configuración](#configuración)
+- [Bloqueo y energía](#bloquear-y-apagar)
+- [Integración con el compositor](#integración-con-el-compositor)
+- [Estructura del proyecto](#estructura)
+- [Licencia y contribuciones](#licencia-y-contribuciones)
 
 ## Desarrollo
 
@@ -55,8 +129,26 @@ squircle, flor o hexágono) se elige en Configuración → Barra superior. Ahí
 también se puede ocultar el avatar, hacer que no siga al cursor, que la isla
 recuerde la última pestaña y elegir qué pestañas mostrar.
 
-El botón con el joystick (**BETA**) es el futuro modo gaming: todavía no hace
-nada. Las alternativas para implementarlo están en `docs/propuesta-modo-gaming.md`.
+El botón con el joystick prende el **modo gaming** (clic derecho: sus ajustes).
+
+## Modo gaming
+
+Mientras está activo, Elaren gasta lo mínimo para dejarle la GPU al juego:
+descarga el visualizador y los widgets de escritorio, apaga el desenfoque de
+KWin (el vidrio pasa a ser casi opaco) y las animaciones, oculta el dock y lee
+las métricas del sistema cada 10 s. Opcionalmente evita que la pantalla se
+apague o se bloquee. Al apagarlo todo vuelve a como estaba; el estado no se
+guarda entre sesiones.
+
+Se prende con el botón de la barra, con un atajo de KDE o, en Configuración →
+Modo gaming, solo mientras un juego use [Feral GameMode](https://github.com/FeralInteractive/gamemode)
+(`gamemoderun %command%` en las opciones de lanzamiento de Steam; requiere el
+paquete `gamemode`). Si lo apagás a mano durante un juego, no vuelve a
+prenderse hasta el próximo.
+
+```bash
+qs ipc -p ~/proyectos/elaren-shell/shell.qml call gamemode toggle   # enable, disable, status
+```
 
 ## Reproductor
 
@@ -143,6 +235,29 @@ qs ipc -p ~/proyectos/elaren-shell/shell.qml call power lock      # suspend, log
 qs ipc -p ~/proyectos/elaren-shell/shell.qml call power preview poweroff   # solo la animación
 ```
 
+### Pantalla de bloqueo
+
+Elaren trae su propia pantalla de bloqueo (`lockscreen/org.elaren.lockscreen`):
+reloj grande sobre el fondo desenfocado y, al tocar una tecla, una tarjeta de
+vidrio con tu avatar, saludo y contraseña (los puntitos aparecen con rebote y
+la tarjeta se sacude si te equivocás), controles de música, suspender, cambiar
+de usuario, distribución de teclado y batería. Usa el acento y la forma del
+avatar de Elaren.
+
+KWin no implementa `ext-session-lock`, así que el bloqueo lo sigue haciendo
+kscreenlocker (el de KDE): Elaren solo reemplaza su interfaz y la
+autenticación, la protección de la sesión y las varias pantallas son las de
+Plasma. Se activa en Configuración → Bloqueo (o con `scripts/lockscreen.sh
+install`) y rige desde el **próximo inicio de sesión**: define
+`PLASMA_DEFAULT_SHELL` solo para KWin con un drop-in en
+`~/.config/systemd/user/plasma-kwin_wayland.service.d/`, sin tocar plasmashell.
+Antes de activarla podés probarla con "Probar" (no bloquea; se cierra con tu
+contraseña) o `scripts/lockscreen.sh test`.
+
+Si alguna vez quedara trabada: Ctrl+Alt+F3, iniciá sesión y
+`loginctl unlock-session`; `scripts/lockscreen.sh uninstall` vuelve a la de
+Plasma.
+
 ## Lanzador de aplicaciones
 
 Panel a pantalla completa con buscador, secciones (Todas, Frecuentes, Juegos,
@@ -180,7 +295,11 @@ invisibles en algunas ventanas).
 Las preferencias (apps fijadas, autoocultar, tamaño de iconos, paralaje) están
 en `config/Config.qml`.
 
-## Integración con KWin
+## Integración con el compositor
+
+Elaren detecta el compositor de la sesión y carga el backend correspondiente.
+
+### KWin en Plasma
 
 KWin no ofrece la lista de ventanas ni los escritorios por protocolos Wayland
 que Quickshell entienda (`ext-workspace`, `foreign-toplevel`). Por eso
@@ -189,7 +308,7 @@ el estado por D-Bus, y Elaren lo lee de la salida del helper. Las órdenes
 (activar, minimizar, cambiar de escritorio) se ejecutan como scripts de KWin
 de un solo uso. Requiere `python3-gi`.
 
-### Capturas de pantalla
+#### Capturas de pantalla
 
 Mientras Spectacle muestra su selector, los popups de la barra (reproductor,
 calendario, sistema) se ocultan al instante: si no, KWin los pinta por encima
@@ -203,6 +322,19 @@ qs ipc -p ~/proyectos/elaren-shell/shell.qml call screenshot region
 ```
 
 (también `fullscreen`, `window` y `monitor`), y quitale ese atajo a Spectacle.
+
+### Hyprland
+
+Las ventanas, escritorios y acciones del dock se conectan al módulo
+`Quickshell.Hyprland`. Hyprland no ofrece minimización tradicional: Elaren la
+simula moviendo ventanas al espacio especial `special:minimized`. La cantidad
+base de escritorios visibles se ajusta en Configuración → Barra superior.
+
+Las capturas usan `grim` y, para una región, `slurp`; se guardan en
+`$XDG_PICTURES_DIR/Capturas` (o `~/Imágenes/Capturas`).
+
+> La pantalla de bloqueo incluida usa kscreenlocker y está pensada para KDE
+> Plasma; no reemplaza el bloqueo de Hyprland.
 
 ## Animaciones
 
@@ -234,16 +366,20 @@ qs ipc -p ~/proyectos/elaren-shell/shell.qml call screenshot region
 - `services/` — lógica sin UI: hora, audio (PipeWire), batería (UPower),
   multimedia (MPRIS), ventanas y escritorios (KWin), apps, wallpaper
 - `kwin/` y `scripts/kwin-bridge.py` — puente con KWin
+- `services/backends/` — integración específica por compositor (Hyprland)
+- `lockscreen/` y `scripts/lockscreen.sh` — pantalla de bloqueo (paquete
+  para kscreenlocker, no corre dentro de Quickshell)
+- `branding/` — identidad visual de Elaren
 - `components/` — controles reutilizables y animaciones base
   (`Anim`, `CAnim`, `StateLayer`, `Reveal`, `RollingText`, `MaterialIcon`…)
 - `theme/` — colores, tipografía, formas y curvas de movimiento (singleton `Theme`)
 
-Requiere la fuente **Material Symbols Rounded** para los iconos.
+## Licencia y contribuciones
 
-## Guía local para agentes
+El repositorio todavía no incluye un archivo de licencia en la raíz. Antes de
+publicar una versión distribuible, definí la licencia del proyecto y agregá el
+archivo correspondiente. La pantalla de bloqueo declara GPL-2.0+ en sus
+metadatos, pero eso no establece por sí solo la licencia del resto del repo.
 
-En la raíz del proyecto puede existir un `AGENTS.md` con instrucciones de
-desarrollo, mapa de módulos y notas sobre configuración y widgets. Es una guía
-local ignorada por Git, así que no se incluye ni aparece en GitHub. Si falta,
-consultá este README y los comentarios junto al código antes de cambiar una
-pieza.
+Para reportar errores o proponer cambios, abrí un issue o pull request con el
+compositor, la versión de Quickshell y los pasos para reproducir el problema.
