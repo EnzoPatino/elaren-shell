@@ -1,59 +1,50 @@
 import QtQuick
 import "../../theme"
 import "../../components"
+import "../../services"
 
-// Modo gaming (beta, todavía no disponible): el botón está para ir viendo
-// dónde va, pero no hace nada. Al pasar el ratón avisa que llega pronto.
-// La propuesta con las alternativas está en docs/propuesta-modo-gaming.md.
+// Botón del modo gaming (ver services/GameMode.qml).
+// Clic: lo prende o lo apaga. Clic derecho: abre sus ajustes.
+// Activo, la píldora se tiñe del acento y muestra "Gaming" (o "Auto" si lo
+// prendió un juego con Feral GameMode). Como el modo apaga las animaciones,
+// el estado activo se lee por color, no por movimiento.
 BarGroup {
     id: root
 
     padding: Theme.spacing.normal
-    opacity: hover.hovered ? 0.8 : 0.5
+    clickable: true
+    color: GameMode.active ? Theme.groupActive : Theme.group
+    border.color: GameMode.active ? Qt.alpha(Theme.primary, 0.45) : Theme.glassBorder
 
-    Behavior on opacity { Anim { duration: Theme.anim.fast } }
+    onClicked: GameMode.toggle()
 
-    HoverHandler {
-        id: hover
-        cursorShape: Qt.ForbiddenCursor
+    Behavior on color { CAnim {} }
+
+    // `parent: root`: si no, el contenido va a la fila interna de BarGroup y
+    // el clic derecho solo funcionaría sobre el icono.
+    TapHandler {
+        parent: root
+        acceptedButtons: Qt.RightButton
+        onTapped: Settings.show("gaming")
     }
 
     MaterialIcon {
         anchors.verticalCenter: parent.verticalCenter
         text: "sports_esports"
         font.pixelSize: Theme.font.icon
-        color: Theme.textMuted
-        animateChange: false
+        color: GameMode.active ? Theme.primary : Theme.textMuted
     }
 
-    Rectangle {
-        anchors.verticalCenter: parent.verticalCenter
-        width: beta.implicitWidth + 8
-        height: 14
-        radius: 7
-        color: Qt.alpha(Theme.warning, 0.18)
-
-        StyledText {
-            id: beta
-            anchors.centerIn: parent
-            text: "BETA"
-            color: Theme.warning
-            font.pixelSize: 8
-            font.weight: Font.Bold
-            font.letterSpacing: 0.8
-        }
-    }
-
-    // Aviso al pasar el ratón
     Reveal {
         anchors.verticalCenter: parent.verticalCenter
-        shown: hover.hovered
+        shown: GameMode.active
 
         StyledText {
-            leftPadding: 2
-            text: "Pronto"
-            color: Theme.textMuted
+            rightPadding: 2
+            text: GameMode.autoActive && !GameMode.manual ? "Auto" : "Gaming"
+            color: Theme.primary
             font.pixelSize: Theme.font.small
+            font.weight: Font.Bold
         }
     }
 }

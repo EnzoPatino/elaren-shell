@@ -30,10 +30,12 @@ PanelWindow {
     WlrLayershell.namespace: "elaren-settings"
     WlrLayershell.keyboardFocus: Settings.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-    BackgroundEffect.blurRegion: Region {
+    // Sin desenfoque en modo gaming, como la barra y los popups.
+    readonly property Region blurArea: Region {
         item: panel
         radius: panel.radius
     }
+    BackgroundEffect.blurRegion: Theme.gaming ? null : blurArea
 
     readonly property list<var> pages: [
         { id: "visualizer", name: "Visualizador", icon: "graphic_eq", description: "Barras y ondas sobre el fondo mientras suena música" },
@@ -42,6 +44,8 @@ PanelWindow {
         { id: "bar", name: "Barra superior", icon: "toolbar", description: "Qué módulos se muestran" },
         { id: "dock", name: "Dock", icon: "space_dashboard", description: "Comportamiento y tamaño de los iconos" },
         { id: "wallpaper", name: "Fondo", icon: "wallpaper", description: "Quién dibuja el fondo y su movimiento" },
+        { id: "gaming", name: "Modo gaming", icon: "sports_esports", description: "Qué se apaga mientras jugás y cuándo se activa" },
+        { id: "lockscreen", name: "Bloqueo", icon: "lock", description: "Pantalla de bloqueo de Elaren" },
         { id: "about", name: "Acerca de", icon: "info", description: "Archivo de configuración y restablecer" }
     ]
     readonly property var currentPage: pages.find(p => p.id === Settings.page) ?? pages[0]
@@ -360,6 +364,8 @@ PanelWindow {
                         case "bar": return barPage;
                         case "dock": return dockPage;
                         case "wallpaper": return wallpaperPage;
+                        case "gaming": return gamingPage;
+                        case "lockscreen": return lockscreenPage;
                         case "about": return aboutPage;
                         default: return visualizerPage;
                         }
@@ -1159,6 +1165,18 @@ PanelWindow {
                     ]
                     onChosen: value => Config.barWorkspaceStyle = value
                 }
+                SliderRow {
+                    visible: Compositor.hyprland
+                    icon: "grid_view"
+                    title: "Espacios de trabajo"
+                    description: "Cuántos se muestran aunque estén vacíos"
+                    value: Config.hyprlandWorkspaces
+                    from: 1
+                    to: 10
+                    stepSize: 1
+                    display: v => Math.round(v)
+                    onMoved: value => Config.hyprlandWorkspaces = Math.round(value)
+                }
                 SwitchRow {
                     icon: "web_asset"
                     title: "Ventana activa"
@@ -1172,6 +1190,13 @@ PanelWindow {
                 title: "Estado (derecha)"
                 icon: "tune"
 
+                SwitchRow {
+                    icon: "sports_esports"
+                    title: "Modo gaming"
+                    description: "Botón para prenderlo; clic derecho abre sus ajustes"
+                    checked: Config.barShowGameMode
+                    onToggled: value => Config.barShowGameMode = value
+                }
                 SwitchRow {
                     icon: "coffee"
                     title: "Cafeína"
@@ -1205,7 +1230,7 @@ PanelWindow {
                 }
             }
 
-            ResetButton { section: "bar" }
+            ResetButton { section: "bar|hyprlandWorkspaces" }
         }
     }
 
@@ -1292,6 +1317,159 @@ PanelWindow {
             }
 
             ResetButton { section: "wallpaper" }
+        }
+    }
+
+    // ── Modo gaming ───────────────────────────────────────────────────────
+    Component {
+        id: gamingPage
+
+        Column {
+            spacing: 20
+
+            SettingsCard {
+                title: "Modo gaming"
+                icon: "sports_esports"
+
+                SwitchRow {
+                    icon: "bolt"
+                    title: "Activado"
+                    description: GameMode.autoActive && !GameMode.manual
+                        ? "Lo activó un juego con GameMode; apagarlo lo deja apagado hasta el próximo"
+                        : "Solo por esta sesión. También: qs ipc call gamemode toggle"
+                    checked: GameMode.active
+                    onToggled: value => value ? GameMode.enable() : GameMode.disable()
+                }
+                SwitchRow {
+                    icon: "smart_toy"
+                    title: "Activar con Feral GameMode"
+                    description: !Config.gameModeAuto
+                        ? "Mientras un juego corra con gamemoderun (p. ej. en Steam: gamemoderun %command%)"
+                        : GameMode.feralAvailable
+                            ? (GameMode.gameCount > 0 ? `Detectado: ${GameMode.gameCount} juego(s) usando GameMode` : "gamemoded disponible, sin juegos ahora")
+                            : "No encuentro gamemoded: instalá el paquete gamemode"
+                    checked: Config.gameModeAuto
+                    onToggled: value => Config.gameModeAuto = value
+                }
+            }
+
+            SettingsCard {
+                title: "Mientras está activo"
+                icon: "tune"
+
+                SwitchRow {
+                    icon: "space_dashboard"
+                    title: "Ocultar el dock"
+                    checked: Config.gameModeHideDock
+                    onToggled: value => Config.gameModeHideDock = value
+                }
+                SwitchRow {
+                    icon: "visibility_lock"
+                    title: "Mantener la pantalla encendida"
+                    description: "No se apaga ni se bloquea por inactividad (útil con mando)"
+                    checked: Config.gameModeInhibitIdle
+                    onToggled: value => Config.gameModeInhibitIdle = value
+                }
+                RowBase {
+                    icon: "power_settings_new"
+                    title: "Siempre se apagan"
+                    description: "Visualizador, widgets de escritorio, desenfoque de KWin y animaciones. Las métricas del sistema se leen cada 10 s."
+                }
+            }
+
+            ResetButton { section: "gameMode" }
+        }
+    }
+
+    // ── Pantalla de bloqueo ───────────────────────────────────────────────
+    Component {
+        id: lockscreenPage
+
+        Column {
+            spacing: 20
+
+            Component.onCompleted: LockScreen.refresh()
+
+            SettingsCard {
+                title: "Pantalla de bloqueo"
+                icon: "lock"
+
+                SwitchRow {
+                    icon: "lock_person"
+                    title: "Usar la pantalla de Elaren"
+                    description: {
+                        if (LockScreen.busy) return "Aplicando…";
+                        switch (LockScreen.state) {
+                        case "active": return "En uso. La seguridad sigue a cargo del bloqueador de KDE.";
+                        case "pending": return "Instalada: se usa desde el próximo inicio de sesión";
+                        case "blocked": return "Instalada, pero no se usa: plasmashellrc fija [Shell] ShellPackage";
+                        case "unsupported": return "Instalada, pero no se usa: esta sesión no inicia KWin con systemd";
+                        default: return "Reemplaza la interfaz de kscreenlocker (no cambia cómo se autentica)";
+                        }
+                    }
+                    checked: LockScreen.installed
+                    onToggled: value => value ? LockScreen.install() : LockScreen.uninstall()
+                }
+                RowBase {
+                    icon: "preview"
+                    title: "Probarla"
+                    description: "Se abre sin bloquear la sesión; se cierra con tu contraseña"
+
+                    ActionButton {
+                        label: "Probar"
+                        onClicked: LockScreen.test()
+                    }
+                }
+                RowBase {
+                    icon: "lock_clock"
+                    title: "Bloquear ahora"
+
+                    ActionButton {
+                        label: "Bloquear"
+                        onClicked: {
+                            Settings.hide();
+                            Power.run("lock");
+                        }
+                    }
+                }
+                RowBase {
+                    visible: LockScreen.message !== ""
+                    icon: "info"
+                    title: "Último mensaje"
+                    description: LockScreen.message
+                }
+            }
+
+            SettingsCard {
+                title: "Aspecto"
+                icon: "palette"
+
+                SwitchRow {
+                    icon: "blur_on"
+                    title: "Desenfocar el fondo"
+                    checked: Config.lockscreenBlur
+                    onToggled: value => Config.lockscreenBlur = value
+                }
+                SwitchRow {
+                    icon: "timer"
+                    title: "Mostrar segundos"
+                    checked: Config.lockscreenClockSeconds
+                    onToggled: value => Config.lockscreenClockSeconds = value
+                }
+                SwitchRow {
+                    icon: "music_note"
+                    title: "Controles de música"
+                    checked: Config.lockscreenShowMedia
+                    onToggled: value => Config.lockscreenShowMedia = value
+                }
+                RowBase {
+                    icon: "sync"
+                    title: "Se copian solos"
+                    description: "El acento, la forma del avatar y la velocidad de las animaciones. Con avatar dibujado se usa la foto de tu cuenta."
+                }
+            }
+
+            ResetButton { section: "lockscreen" }
         }
     }
 

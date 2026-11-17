@@ -47,21 +47,24 @@ PanelWindow {
 
     mask: Region { item: root.islandShown ? catcher : barArea }
 
-    // Desenfoque real (KWin) detrás de la barra y de la isla.
-    BackgroundEffect.blurRegion: Region {
+    // Desenfoque real (KWin) detrás de la barra y de la isla. En modo
+    // gaming se apaga: KWin lo recalcularía en cada cuadro del juego.
+    readonly property Region blurArea: Region {
         item: barArea
         radius: root.barRadius
 
         Region { item: islandBox; radius: Theme.radius.large }
         Region { item: islandJoint }
     }
+    BackgroundEffect.blurRegion: Theme.gaming ? null : blurArea
 
     property bool revealed: false
 
-    // Cafeína: mientras está activa, la sesión no se suspende ni se bloquea.
+    // Cafeína (o modo gaming, si así se eligió): mientras está activa, la
+    // sesión no se suspende ni se bloquea.
     IdleInhibitor {
         window: root
-        enabled: Caffeine.enabled
+        enabled: Caffeine.enabled || (GameMode.active && Config.gameModeInhibitIdle)
     }
 
     // ── Estado ────────────────────────────────────────────────────────────
@@ -91,9 +94,9 @@ PanelWindow {
 
     // Durante una captura de pantalla la isla se cierra.
     Connections {
-        target: KWin
+        target: Compositor
         function onScreenshotActiveChanged(): void {
-            if (KWin.screenshotActive) root.islandOpen = false;
+            if (Compositor.screenshotActive) root.islandOpen = false;
         }
     }
 
@@ -346,9 +349,10 @@ PanelWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.spacing.normal
 
-                    // Modo gaming: en beta, visible pero deshabilitado.
+                    // Modo gaming (ver services/GameMode.qml)
                     GameModeButton {
                         anchors.verticalCenter: parent.verticalCenter
+                        visible: Config.barShowGameMode
                         revealed: root.revealed
                         revealDelay: 340
                     }

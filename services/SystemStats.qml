@@ -8,8 +8,19 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property int interval: 2000
+    // En modo gaming se muestrea mucho menos.
+    readonly property int interval: GameMode.active ? 10000 : 2000
     readonly property int historyLength: 60
+
+    // Cada historial tiene una sola escala de tiempo: al cambiar el intervalo
+    // (entrar o salir del modo gaming) se empieza de nuevo, en vez de mezclar
+    // muestras de 2 s con muestras de 10 s en el mismo gráfico.
+    onIntervalChanged: {
+        cpuHistory = [];
+        memoryHistory = [];
+        netDownHistory = [];
+        netUpHistory = [];
+    }
 
     // Fracciones 0..1
     property real cpu: 0

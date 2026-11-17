@@ -135,11 +135,14 @@ ensure_krohnkite() {
     fi
 }
 
-for ((tries = 0; tries < 100; tries++)); do
-    kwin_ready && break
-    sleep 0.2
-done
-ensure_krohnkite
+# En Hyprland no hay KWin que esperar ni Krohnkite que ajustar.
+if [[ -z ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
+    for ((tries = 0; tries < 100; tries++)); do
+        kwin_ready && break
+        sleep 0.2
+    done
+    ensure_krohnkite
+fi
 # Un instante para que la pantalla y los scripts de KWin se asienten antes de
 # crear la barra, el dock y los widgets. ELAREN_START_DELAY=0 lo desactiva.
 sleep "${ELAREN_START_DELAY:-1.5}"

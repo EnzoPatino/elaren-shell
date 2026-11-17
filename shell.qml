@@ -20,6 +20,12 @@ ShellRoot {
     // Panel de Configuración (engranaje del lanzador o clic derecho en "Apps")
     SettingsWindow {}
 
+    // Servicios con IPC propio que ningún módulo visible instancia de
+    // entrada: se crean acá para que `qs ipc call gamemode …` y
+    // `… lockscreen …` respondan desde el arranque y para mantener
+    // sincronizada la pantalla de bloqueo.
+    readonly property list<QtObject> eagerServices: [GameMode, LockScreen]
+
     Variants {
         model: Quickshell.screens
 
@@ -30,8 +36,13 @@ ShellRoot {
 
             // Widgets de escritorio en cada pantalla conectada. Comparten
             // las posiciones relativas guardadas en Configuración → Widgets.
-            DesktopWidgets {
-                screen: perScreen.modelData
+            // El modo gaming los descarga.
+            LazyLoader {
+                active: !GameMode.active
+
+                DesktopWidgets {
+                    screen: perScreen.modelData
+                }
             }
 
             LazyLoader {
@@ -44,7 +55,7 @@ ShellRoot {
 
             // Barras/ondas sobre el fondo mientras suena música
             LazyLoader {
-                active: Config.visualizerEnabled
+                active: Config.visualizerEnabled && !GameMode.active
 
                 AudioVisualizer {
                     screen: perScreen.modelData
@@ -67,7 +78,7 @@ ShellRoot {
             }
 
             LazyLoader {
-                active: Config.dockEnabled
+                active: Config.dockEnabled && !(GameMode.active && Config.gameModeHideDock)
 
                 Dock {
                     screen: perScreen.modelData

@@ -15,7 +15,7 @@ Singleton {
         const ids = [...Config.pinnedApps];
         const known = new Set(ids.map(id => key(id)));
         const extra = [];
-        for (const w of KWin.windows) {
+        for (const w of Compositor.windows) {
             const k = key(w.appId);
             if (!known.has(k) && !known.has(key(entryKey(w.appId)))) {
                 known.add(k);
@@ -46,7 +46,7 @@ Singleton {
     }
 
     function windowsFor(appId: string): list<var> {
-        return KWin.windows.filter(w => matches(appId, w));
+        return Compositor.windows.filter(w => matches(appId, w));
     }
 
     function name(appId: string): string {
@@ -75,11 +75,11 @@ Singleton {
             return true; // se lanzó
         }
         if (windows.length === 1) {
-            KWin.toggle(windows[0].id);
+            Compositor.toggle(windows[0].id);
             return false;
         }
-        const current = windows.findIndex(w => w.id === KWin.activeWindow);
-        KWin.activate(windows[(current + 1) % windows.length].id);
+        const current = windows.findIndex(w => w.id === Compositor.activeWindow);
+        Compositor.activate(windows[(current + 1) % windows.length].id);
         return false;
     }
 }

@@ -1,8 +1,11 @@
 # Propuesta: modo gaming
 
-**Estado:** beta, no disponible. En la barra hay un botón (`modules/bar/GameModeButton.qml`)
-visible pero deshabilitado. Este documento junta las alternativas para decidir
-cómo implementarlo.
+**Estado:** implementado (A + B como disparador opcional), en
+`services/GameMode.qml`. Decisiones tomadas: el dock se oculta (configurable),
+el fondo no se toca (el de Elaren es una imagen fija; el de skwd/Plasma no lo
+controla Elaren) y el aviso es el botón de la barra teñido del acento con el
+rótulo "Gaming"/"Auto". C (pantalla completa) queda pendiente. Lo que sigue
+es la propuesta original.
 
 ## Objetivo
 

@@ -5,7 +5,7 @@ import "../../config"
 import "../../components"
 import "../../services"
 
-// Escritorios virtuales de KWin.
+// Escritorios virtuales (KWin) o espacios de trabajo (Hyprland).
 // - Activo: píldora ancha con su rótulo.
 // - Con ventanas: rótulo. Vacío: un punto (que muestra el rótulo al pasar el ratón).
 // - Rótulos (Config.barWorkspaceStyle): números (1 2 3), romanos (I II III),
@@ -47,8 +47,15 @@ Item {
         return (tens > 1 ? digits[tens] : "") + "十" + digits[n % 10];
     }
 
+    // Número del escritorio: el id real en Hyprland (puede haber huecos, p. ej.
+    // 1…5 y 9), la posición en KWin (sus ids no son números).
+    function number(index: int): int {
+        const id = Number(Workspaces.list[index]?.id);
+        return Number.isInteger(id) && id > 0 ? id : index + 1;
+    }
+
     function label(index: int): string {
-        const n = index + 1;
+        const n = number(index);
         return style === "roman" ? roman(n) : style === "kanji" ? kanji(n)
             : style === "dots" || style === "pacman" ? "" : String(n);
     }
@@ -172,7 +179,7 @@ Item {
                 required property var modelData
                 required property int index
                 readonly property bool isActive: index === root.active
-                readonly property bool occupied: KWin.windowsOn(modelData.id).length > 0
+                readonly property bool occupied: Compositor.windowsOn(modelData.id).length > 0
                 readonly property bool showNumber: root.style !== "dots" && root.style !== "pacman"
                     && (isActive || occupied || touch.containsMouse)
                 readonly property bool pac: root.style === "pacman"

@@ -3,7 +3,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Estado de ventanas y escritorios de KWin, recibido a través de
+// Backend de KWin para services/Compositor.qml (los módulos no lo usan
+// directo): estado de ventanas y escritorios recibido a través de
 // scripts/kwin-bridge.py (KWin no ofrece estos datos por protocolos Wayland
 // que Quickshell entienda). Si el puente cae, se reinicia solo.
 Singleton {
@@ -17,55 +18,16 @@ Singleton {
     // id de ventana → título actual (cambia mucho más seguido que `windows`)
     property var captions: ({})
 
-    // Hay una captura de pantalla en curso: los popups de la barra se ocultan
-    // al instante para no tapar el selector de Spectacle ni salir en la foto.
+    // Spectacle muestra su selector (lo usa services/Compositor.qml para
+    // ocultar los popups durante la captura). `screenshotSettled` se emite en
+    // cada estado que lo reporta, aunque el valor no cambie.
     property bool screenshotOverlay: false
-    property bool screenshotPending: false
-    readonly property bool screenshotActive: screenshotOverlay || screenshotPending
+    signal screenshotSettled()
 
-    // Captura "limpia": oculta los popups, espera a que se borren de la
-    // pantalla y recién entonces abre Spectacle. Pensado para asignarle la
-    // tecla Impr Pant (ver README):
-    //   qs ipc -p <ruta>/shell.qml call screenshot region
     // Modos: region, fullscreen, window (ventana activa), monitor.
-    IpcHandler {
-        target: "screenshot"
-
-        function region(): void { root.screenshot("-r"); }
-        function fullscreen(): void { root.screenshot("-f"); }
-        function window(): void { root.screenshot("-a"); }
-        function monitor(): void { root.screenshot("-m"); }
-    }
-
-    property string pendingMode: ""
     function screenshot(mode: string): void {
-        pendingMode = mode;
-        screenshotPending = true;
-        launchShot.restart();
-    }
-
-    Timer {
-        id: launchShot
-        // Un par de cuadros para que el compositor ya no muestre los popups.
-        interval: 120
-        onTriggered: {
-            Quickshell.execDetached(["spectacle", root.pendingMode]);
-            pendingClear.restart();
-        }
-    }
-
-    // Respaldo por si el puente no ve la ventana de Spectacle (o en modos sin
-    // selector, donde no aparece ninguna).
-    Timer {
-        id: pendingClear
-        interval: 2500
-        onTriggered: root.screenshotPending = false
-    }
-
-    readonly property int currentDesktopIndex: desktops.findIndex(d => d.id === currentDesktop)
-
-    function windowsOn(desktopId: string): list<var> {
-        return windows.filter(w => w.onAllDesktops || w.desktops.includes(desktopId));
+        const flags = { region: "-r", fullscreen: "-f", window: "-a", monitor: "-m" };
+        Quickshell.execDetached(["spectacle", flags[mode] ?? "-r"]);
     }
 
     function activate(id: string): void { send({ cmd: "activate", id }); }
@@ -119,10 +81,7 @@ Singleton {
         currentDesktop = state.currentDesktop ?? "";
         activeWindow = state.active ?? "";
         screenshotOverlay = state.screenshot ?? false;
-        if (screenshotOverlay) {
-            pendingClear.stop();
-            screenshotPending = false;
-        }
+        if (screenshotOverlay) screenshotSettled();
         connected = true;
     }
 

@@ -35,12 +35,12 @@ PopupWindow {
     implicitHeight: card.height + 16
     color: "transparent"
     // Durante una captura de pantalla desaparece sin animación y se cierra.
-    visible: progress > 0.001 && !KWin.screenshotActive
+    visible: progress > 0.001 && !Compositor.screenshotActive
 
     Connections {
-        target: KWin
+        target: Compositor
         function onScreenshotActiveChanged(): void {
-            if (KWin.screenshotActive && root.open) root.dismissed();
+            if (Compositor.screenshotActive && root.open) root.dismissed();
         }
     }
 
@@ -56,11 +56,12 @@ PopupWindow {
 
     Behavior on progress { Anim { id: progressAnim } }
 
-    // Vidrio: desenfoque real de KWin detrás de la tarjeta.
-    BackgroundEffect.blurRegion: Region {
+    // Vidrio: desenfoque real de KWin detrás de la tarjeta (no en modo gaming).
+    readonly property Region blurArea: Region {
         item: card
         radius: card.radius
     }
+    BackgroundEffect.blurRegion: Theme.gaming ? null : blurArea
 
     Rectangle {
         id: card

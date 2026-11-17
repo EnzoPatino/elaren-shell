@@ -87,8 +87,8 @@ PanelWindow {
 
     property bool peeking: true
     property bool lingering: false
-    readonly property bool desktopEmpty: KWin.connected
-        && KWin.windowsOn(KWin.currentDesktop).every(w => w.minimized)
+    readonly property bool desktopEmpty: Compositor.connected
+        && Compositor.windowsOn(Compositor.currentDesktop).every(w => w.minimized)
     readonly property bool shown: !Config.dockAutoHide || hovering || lingering || peeking
 
     anchors {
@@ -228,7 +228,7 @@ PanelWindow {
                         readonly property bool isSeparator: modelData === Apps.separator
                         readonly property list<var> windows: isSeparator ? [] : Apps.windowsFor(modelData)
                         readonly property bool running: windows.length > 0
-                        readonly property bool focused: windows.some(w => w.id === KWin.activeWindow)
+                        readonly property bool focused: windows.some(w => w.id === Compositor.activeWindow)
 
                         readonly property int level: dock.emphasis(index)
                         readonly property real hoverScale: level === 2 ? dock.hoverScale : level === 1 ? dock.neighbourScale : 1

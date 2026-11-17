@@ -14,10 +14,10 @@ Reveal {
     property int revealDelay: 0
     property int maxWidth: 320
 
-    readonly property var window: KWin.windows.find(w => w.id === KWin.activeWindow) ?? null
+    readonly property var window: Compositor.windows.find(w => w.id === Compositor.activeWindow) ?? null
 
     readonly property string windowId: window?.id ?? ""
-    readonly property string caption: KWin.captions[windowId] ?? window?.caption ?? ""
+    readonly property string caption: Compositor.captions[windowId] ?? window?.caption ?? ""
 
     shown: window !== null && revealed
 

@@ -24,8 +24,8 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Background
     WlrLayershell.namespace: "elaren-wallpaper"
 
-    readonly property int desktopCount: Math.max(1, KWin.desktops.length)
-    readonly property int desktopIndex: Math.max(0, KWin.currentDesktopIndex)
+    readonly property int desktopCount: Math.max(1, Compositor.desktops.length)
+    readonly property int desktopIndex: Math.max(0, Compositor.currentDesktopIndex)
     readonly property real parallaxRange: (desktopCount - 1) * Config.wallpaperParallax
 
     // Capa que se mueve con el paralaje; las imágenes van dentro.

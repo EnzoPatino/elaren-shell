@@ -37,10 +37,11 @@ PanelWindow {
     WlrLayershell.namespace: "elaren-launcher"
     WlrLayershell.keyboardFocus: AppLauncher.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-    BackgroundEffect.blurRegion: Region {
+    readonly property Region blurArea: Region {
         item: panel
         radius: panel.radius
     }
+    BackgroundEffect.blurRegion: Theme.gaming ? null : blurArea
 
     function selectSection(id: string): void {
         query = "";

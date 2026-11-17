@@ -33,8 +33,12 @@ QtObject {
     readonly property color warning: "#f9e2af"
     readonly property color error: "#f38ba8"
 
+    // Modo gaming activo (lo fija services/GameMode.qml): sin desenfoque de
+    // KWin ni animaciones, así que el vidrio pasa a ser casi opaco.
+    property bool gaming: false
+
     // Superficies translúcidas (sobre desenfoque de KWin)
-    readonly property color glass: Qt.alpha(surface, 0.78)
+    readonly property color glass: Qt.alpha(surface, gaming ? 0.95 : 0.78)
     readonly property color glassBorder: Qt.alpha("white", 0.08)
     readonly property color glassHighlight: Qt.alpha("white", 0.05)
     readonly property color group: Qt.alpha("#4a4a6a", 0.32)
@@ -78,7 +82,9 @@ QtObject {
     // ── Movimiento ────────────────────────────────────────────────────────
     // Configuración → Apariencia, o ELAREN_ANIM_SCALE (0 = sin animaciones, 2 = el doble de lentas).
     component Motion: QtObject {
+        property bool off: false
         readonly property real scale: {
+            if (off) return 0;
             const v = parseFloat(Quickshell.env("ELAREN_ANIM_SCALE"));
             if (!isNaN(v) && v >= 0) return v;
             return Math.max(0, Config.animationScale);
@@ -96,5 +102,8 @@ QtObject {
         readonly property list<real> expressive: [0.38, 1.21, 0.22, 1, 1, 1]
         readonly property list<real> expressiveFast: [0.42, 1.67, 0.21, 0.9, 1, 1]
     }
-    readonly property Motion anim: Motion {}
+    readonly property Motion anim: Motion { off: root.gaming }
+    // La elegida por la persona, sin el modo gaming: la usa la pantalla de
+    // bloqueo (services/LockScreen.qml), que no depende de ese modo.
+    readonly property Motion userAnim: Motion {}
 }

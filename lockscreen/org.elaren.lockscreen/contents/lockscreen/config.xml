@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Opciones de la pantalla de bloqueo. Elaren las escribe en
+    ~/.config/kscreenlockerrc ([Greeter][LnF][General]) a partir de su propia
+    configuración (acento, avatar, animaciones…): no hace falta editarlas a mano.
+-->
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+      http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
+  <kcfgfile name=""/>
+
+  <group name="General">
+    <entry name="accent" type="String">
+      <default>#a6c8ff</default>
+    </entry>
+    <entry name="accentSecondary" type="String">
+      <default>#cdb4ff</default>
+    </entry>
+    <entry name="accentOn" type="String">
+      <default>#0b2a52</default>
+    </entry>
+    <entry name="animationScale" type="Double">
+      <default>1</default>
+    </entry>
+    <entry name="avatarImage" type="String">
+      <default></default>
+    </entry>
+    <entry name="avatarShape" type="String">
+      <default>squircle</default>
+    </entry>
+    <entry name="blur" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="clockSeconds" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="showMedia" type="Bool">
+      <default>true</default>
+    </entry>
+  </group>
+</kcfg>

@@ -80,8 +80,11 @@ Singleton {
     property alias barShowWorkspaces: store.barShowWorkspaces
     // Cómo se rotulan los escritorios: "numbers" | "roman" | "kanji" | "dots"
     property alias barWorkspaceStyle: store.barWorkspaceStyle
+    // Hyprland crea los espacios al usarlos: cuántos se muestran siempre.
+    property alias hyprlandWorkspaces: store.hyprlandWorkspaces
     property alias barShowActiveWindow: store.barShowActiveWindow
     property alias barShowCaffeine: store.barShowCaffeine
+    property alias barShowGameMode: store.barShowGameMode
     property alias barShowNetwork: store.barShowNetwork
     property alias barShowBrightness: store.barShowBrightness
     property alias barShowVolume: store.barShowVolume
@@ -114,6 +117,23 @@ Singleton {
     property alias dockMagnification: store.dockMagnification
     // Ids de los .desktop fijados (sin la extensión).
     property alias pinnedApps: store.pinnedApps
+
+    // ── Modo gaming ───────────────────────────────────────────────────────
+    // El modo en sí no se guarda (es de la sesión, ver services/GameMode.qml);
+    // estas son sus preferencias.
+    // Activarlo solo mientras un juego use Feral GameMode (gamemoderun).
+    property alias gameModeAuto: store.gameModeAuto
+    property alias gameModeHideDock: store.gameModeHideDock
+    // Que la pantalla no se apague ni se bloquee mientras dura.
+    property alias gameModeInhibitIdle: store.gameModeInhibitIdle
+
+    // ── Pantalla de bloqueo ───────────────────────────────────────────────
+    // La dibuja kscreenlocker con lockscreen/org.elaren.lockscreen; estas
+    // opciones (y el acento, el avatar y la velocidad de las animaciones) se
+    // le copian solas (ver services/LockScreen.qml).
+    property alias lockscreenBlur: store.lockscreenBlur
+    property alias lockscreenShowMedia: store.lockscreenShowMedia
+    property alias lockscreenClockSeconds: store.lockscreenClockSeconds
 
     // ── Fondo ─────────────────────────────────────────────────────────────
     // Quién dibuja el fondo: "auto" (skwd-wall si su daemon corre en modo
@@ -152,8 +172,10 @@ Singleton {
         barShowWorkspaces: true,
         barPosition: "top",
         barWorkspaceStyle: "numbers",
+        hyprlandWorkspaces: 5,
         barShowActiveWindow: true,
         barShowCaffeine: true,
+        barShowGameMode: true,
         barShowNetwork: true,
         barShowBrightness: true,
         barShowVolume: true,
@@ -195,6 +217,12 @@ Singleton {
         dockAutoHide: true,
         dockIconSize: 44,
         dockMagnification: true,
+        gameModeAuto: false,
+        gameModeHideDock: true,
+        gameModeInhibitIdle: true,
+        lockscreenBlur: true,
+        lockscreenShowMedia: true,
+        lockscreenClockSeconds: false,
         wallpaperProvider: "auto",
         wallpaper: "",
         wallpaperParallax: 24
@@ -240,8 +268,10 @@ Singleton {
             property bool barShowWorkspaces: true
             property string barPosition: "top"
             property string barWorkspaceStyle: "numbers"
+            property int hyprlandWorkspaces: 5
             property bool barShowActiveWindow: true
             property bool barShowCaffeine: true
+            property bool barShowGameMode: true
             property bool barShowNetwork: true
             property bool barShowBrightness: true
             property bool barShowVolume: true
@@ -292,6 +322,14 @@ Singleton {
                 "org.kde.discover",
                 "systemsettings"
             ]
+
+            property bool gameModeAuto: false
+            property bool gameModeHideDock: true
+            property bool gameModeInhibitIdle: true
+
+            property bool lockscreenBlur: true
+            property bool lockscreenShowMedia: true
+            property bool lockscreenClockSeconds: false
 
             property string wallpaperProvider: "auto"
             property string wallpaper: ""
