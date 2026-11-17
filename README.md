@@ -43,7 +43,7 @@ bus de sesión D-Bus funcional. Las funciones opcionales pueden requerir:
 | Espectro de audio preciso | `cava` (sin él se usa el nivel de audio de PipeWire) |
 | Modo gaming automático por juego | Feral GameMode (`gamemode`) |
 | Capturas en Hyprland | `grim`; `slurp` para seleccionar una región; `wl-copy` y `notify-send` para extras |
-| Pantalla de bloqueo de Elaren | KDE Plasma 6, `kscreenlocker` y `systemd --user` |
+| Pantalla de bloqueo de Elaren | Plasma: `kscreenlocker` y `systemd --user`. Hyprland: Quickshell con sus módulos de PAM y de bloqueo de sesión, `busctl`, `gdbus` y `systemd-inhibit` |
 | Clima y letras | Conexión a internet cuando se consultan |
 
 ## Inicio rápido
@@ -255,8 +255,9 @@ Antes de activarla podés probarla con "Probar" (no bloquea; se cierra con tu
 contraseña) o `scripts/lockscreen.sh test`.
 
 Si alguna vez quedara trabada: Ctrl+Alt+F3, iniciá sesión y
-`loginctl unlock-session`; `scripts/lockscreen.sh uninstall` vuelve a la de
-Plasma.
+`loginctl unlock-sessions` (con "s": sin ella y sin número desbloquearía la
+sesión de esa terminal, no la gráfica); `scripts/lockscreen.sh uninstall`
+vuelve a la de Plasma.
 
 ## Lanzador de aplicaciones
 
@@ -333,8 +334,63 @@ base de escritorios visibles se ajusta en Configuración → Barra superior.
 Las capturas usan `grim` y, para una región, `slurp`; se guardan en
 `$XDG_PICTURES_DIR/Capturas` (o `~/Imágenes/Capturas`).
 
-> La pantalla de bloqueo incluida usa kscreenlocker y está pensada para KDE
-> Plasma; no reemplaza el bloqueo de Hyprland.
+#### Bloqueo en Hyprland
+
+En Hyprland bloquea Elaren mismo, con el protocolo seguro `ext-session-lock`:
+reloj sobre el fondo desenfocado y la contraseña se verifica con PAM
+(`/etc/pam.d/login`). No hace falta instalar nada en Configuración → Bloqueo.
+
+- Bloquea desde la barra o el lanzador, con
+  `qs ipc -p <ruta>/shell.qml call power lock` y con `loginctl lock-session`.
+- Con hypridle, que bloquee con `loginctl lock-session` y **sin `lock_cmd`**:
+  Elaren ya escucha ese pedido. (`lock_cmd = loginctl lock-session` armaría
+  un bucle: hypridle corre `lock_cmd` cada vez que alguien pide bloquear.)
+
+  ```ini
+  general {
+      before_sleep_cmd = loginctl lock-session
+  }
+
+  listener {
+      timeout = 300                      # 5 minutos sin uso
+      on-timeout = loginctl lock-session
+  }
+  ```
+- Antes de suspender (también al cerrar la tapa) bloquea y espera a que la
+  pantalla esté puesta.
+- Mientras está bloqueada no se recarga sola al cambiar archivos, y si la
+  shell se relanza vuelve a bloquear.
+
+No uses hyprlock al mismo tiempo: si otro bloqueador ya tiene el protocolo,
+Elaren se retira y no bloquea. Si la pantalla de Elaren no puede cargarse
+(faltan los módulos de PAM o de bloqueo de Quickshell), Configuración →
+Bloqueo lo indica y al bloquear aparece un aviso.
+
+Recomendado en `hyprland.conf`, para poder recuperar el bloqueo si la shell
+se cae:
+
+```ini
+misc {
+    allow_session_lock_restore = true
+}
+```
+
+Si alguna vez quedara trabada, desde otra terminal (Ctrl+Alt+F3) e
+iniciando sesión:
+
+- **Elaren sigue andando** (por ejemplo, PAM no acepta la contraseña):
+  `loginctl unlock-sessions` (con "s": `unlock-session` sin número
+  desbloquearía la sesión de esa terminal, no la gráfica).
+- **La shell se cayó** (Hyprland muestra una pantalla de error): con
+  `allow_session_lock_restore` activado, relanzá Elaren con
+  `hyprctl --instance 0 dispatch exec "qs -p <ruta>/shell.qml"` y volvé a
+  la sesión gráfica (Ctrl+Alt+F1 o F2). Elaren vuelve a bloquear y se
+  desbloquea con la contraseña. Si no lo tenías activado, primero
+  `hyprctl --instance 0 keyword misc:allow_session_lock_restore 1`.
+  `loginctl unlock-sessions` no alcanza en este caso: el bloqueo lo sostiene
+  Hyprland, no Elaren. Como último recurso,
+  `hyprctl --instance 0 dispatch exit` cierra la sesión (se pierde lo que no
+  esté guardado).
 
 ## Animaciones
 

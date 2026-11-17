@@ -41,7 +41,7 @@ Singleton {
     property bool resyncNeeded: false
 
     function test(): void {
-        if (testProc.running) return;
+        if (!active || testProc.running) return;
         testPending = true;
         syncTimer.stop();
         // Un sync en curso puede llevar valores viejos: repetirlo al terminar.
@@ -49,12 +49,21 @@ Singleton {
         else startSync();
     }
 
+    // En Hyprland bloquea Elaren mismo (SessionLock): no hay que leer ni
+    // escribir la configuración de kscreenlocker.
+    readonly property bool active: !SessionLock.supported
+
     function refresh(): void {
+        if (!active) return;
         statusProc.running = true;
     }
 
     function run(args: list<string>): void {
         if (busy) return;
+        if (!active) {
+            message = "En Hyprland la pantalla de bloqueo es la de Elaren; no hace falta instalar nada.";
+            return;
+        }
         busy = true;
         message = "";
         actionOut = "";
@@ -92,8 +101,8 @@ Singleton {
     // Antes de sincronizar se vuelve a leer el estado: puede haberse
     // instalado desde la terminal (scripts/lockscreen.sh install) con la
     // shell abierta, y `installed` habría quedado viejo.
-    onValuesChanged: syncTimer.restart()
-    onInstalledChanged: if (installed) sync()
+    onValuesChanged: if (active) syncTimer.restart()
+    onInstalledChanged: if (installed && active) sync()
     property bool syncAfterStatus: false
 
     Timer {
@@ -129,7 +138,7 @@ Singleton {
 
     Process {
         id: statusProc
-        running: true
+        running: root.active
         command: [root.script, "status"]
         stdout: StdioCollector {
             onStreamFinished: {

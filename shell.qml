@@ -24,7 +24,15 @@ ShellRoot {
     // entrada: se crean acá para que `qs ipc call gamemode …` y
     // `… lockscreen …` respondan desde el arranque y para mantener
     // sincronizada la pantalla de bloqueo.
-    readonly property list<QtObject> eagerServices: [GameMode, LockScreen]
+    readonly property list<QtObject> eagerServices: [GameMode, LockScreen, SessionLock]
+
+    // Bloqueo de sesión propio (Hyprland; en Plasma bloquea kscreenlocker).
+    // Se carga por ruta para que, donde no hace falta, Quickshell no tenga
+    // que traer sus módulos de PAM y de bloqueo.
+    LazyLoader {
+        active: SessionLock.supported
+        source: SessionLock.supported ? Qt.resolvedUrl("modules/lock/SessionLockScreen.qml") : ""
+    }
 
     Variants {
         model: Quickshell.screens

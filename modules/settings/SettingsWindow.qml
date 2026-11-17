@@ -1394,7 +1394,19 @@ PanelWindow {
                 title: "Pantalla de bloqueo"
                 icon: "lock"
 
+                // Hyprland: bloquea Elaren mismo (services/SessionLock.qml).
+                RowBase {
+                    visible: SessionLock.supported
+                    icon: SessionLock.available ? "verified_user" : "error"
+                    title: SessionLock.available ? "La usa Elaren" : "No disponible"
+                    description: SessionLock.available
+                        ? "Bloquea la sesión con el protocolo seguro de Wayland y verifica tu contraseña con PAM. Con hypridle, usá loginctl lock-session en on-timeout y before_sleep_cmd, sin lock_cmd (ver README)."
+                        : "No se pudo cargar el bloqueo: Quickshell necesita sus módulos de PAM y de bloqueo de sesión. Mientras tanto se usa loginctl lock-session."
+                }
+
+                // Plasma: interfaz para kscreenlocker
                 SwitchRow {
+                    visible: !SessionLock.supported
                     icon: "lock_person"
                     title: "Usar la pantalla de Elaren"
                     description: {
@@ -1411,6 +1423,7 @@ PanelWindow {
                     onToggled: value => value ? LockScreen.install() : LockScreen.uninstall()
                 }
                 RowBase {
+                    visible: !SessionLock.supported
                     icon: "preview"
                     title: "Probarla"
                     description: "Se abre sin bloquear la sesión; se cierra con tu contraseña"
@@ -1433,7 +1446,7 @@ PanelWindow {
                     }
                 }
                 RowBase {
-                    visible: LockScreen.message !== ""
+                    visible: !SessionLock.supported && LockScreen.message !== ""
                     icon: "info"
                     title: "Último mensaje"
                     description: LockScreen.message
@@ -1456,13 +1469,16 @@ PanelWindow {
                     checked: Config.lockscreenClockSeconds
                     onToggled: value => Config.lockscreenClockSeconds = value
                 }
+                // Todavía solo en la pantalla de Plasma
                 SwitchRow {
+                    visible: !SessionLock.supported
                     icon: "music_note"
                     title: "Controles de música"
                     checked: Config.lockscreenShowMedia
                     onToggled: value => Config.lockscreenShowMedia = value
                 }
                 RowBase {
+                    visible: !SessionLock.supported
                     icon: "sync"
                     title: "Se copian solos"
                     description: "El acento, la forma del avatar y la velocidad de las animaciones. Con avatar dibujado se usa la foto de tu cuenta."

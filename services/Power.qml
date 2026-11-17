@@ -11,6 +11,8 @@ import "../theme"
 // - Al desbloquear la sesión (venga de donde venga el bloqueo: Elaren,
 //   Meta+L, inactividad…) se reproduce una animación de bienvenida.
 //
+// En Hyprland el bloqueo lo hace Elaren mismo (services/SessionLock.qml).
+//
 // Para que los atajos de KDE también tengan animación, asignales p. ej.:
 //   qs ipc -p <ruta>/shell.qml call power lock
 //   qs ipc -p <ruta>/shell.qml call power poweroff
@@ -31,7 +33,8 @@ Singleton {
     readonly property var commands: ({
         lock: ["loginctl", "lock-session"],
         suspend: ["systemctl", "suspend"],
-        logout: ["qdbus6", "org.kde.Shutdown", "/Shutdown", "org.kde.Shutdown.logout"],
+        logout: Compositor.hyprland ? ["hyprctl", "dispatch", "exit"]
+            : ["qdbus6", "org.kde.Shutdown", "/Shutdown", "org.kde.Shutdown.logout"],
         reboot: ["systemctl", "reboot"],
         poweroff: ["systemctl", "poweroff"]
     })
@@ -84,7 +87,31 @@ Singleton {
                 fallback.restart();
                 return;
             }
-            Quickshell.execDetached(root.commands[root.action]);
+            // En Hyprland bloquea Elaren (services/SessionLock.qml). Si su
+            // pantalla no llegó a cargarse, loginctl: quizás hay otro
+            // bloqueador (hyprlock) escuchando.
+            if (root.action === "lock" && SessionLock.available) {
+                SessionLock.lock();
+            } else if (root.action === "suspend" && SessionLock.available) {
+                // Bloquear antes de dormir: al abrir la tapa tiene que estar
+                // la pantalla de bloqueo, no el escritorio.
+                SessionLock.lock();
+                if (SessionLock.secure) Quickshell.execDetached(root.commands.suspend);
+                else suspendWait.restart();
+            } else if (root.action === "suspend" && SessionLock.supported) {
+                // Hyprland sin la pantalla de Elaren (falta PAM o el módulo
+                // de bloqueo de Quickshell): no se suspende, porque al abrir
+                // la tapa la sesión estaría abierta.
+                root.warnNoLock(true);
+                root.finish(false);
+                return;
+            } else {
+                // Lo mismo al bloquear: loginctl solo bloquea si hay otro
+                // bloqueador escuchando (hyprlock). Avisar, para que nadie se
+                // vaya creyendo que la sesión quedó bloqueada.
+                if (root.action === "lock" && SessionLock.supported) root.warnNoLock(false);
+                Quickshell.execDetached(root.commands[root.action]);
+            }
             // Bloquear/suspender: el telón queda negro debajo del bloqueador
             // y al volver se abre con la bienvenida. Apagar/reiniciar/salir:
             // si en unos segundos no pasó nada (p. ej. se canceló un diálogo
@@ -94,11 +121,28 @@ Singleton {
         }
     }
 
+    // Suspender en Hyprland: recién se suspende cuando el compositor confirma
+    // el bloqueo (onSecureChanged, más abajo). Si no lo confirma a tiempo,
+    // NO se suspende: mejor quedarse despierta que dormir desbloqueada.
+    Timer {
+        id: suspendWait
+        interval: 5000
+        onTriggered: {
+            console.warn("power: el bloqueo no se confirmó; no suspendo");
+            // Levantar el telón: fail() lo hace a través del desbloqueo; si
+            // ya no estaba bloqueada, se termina la acción acá.
+            if (SessionLock.locked) SessionLock.fail();
+            else root.finish(false);
+        }
+    }
+
     // Respaldo: nunca dejar la pantalla tapada si la acción no ocurrió.
     Timer {
         id: fallback
         onTriggered: {
-            if (root.action === "lock" && root.locked) return; // la abre el desbloqueo
+            // Bloqueada: el telón lo abre el desbloqueo (si no, la bienvenida
+            // se vería dos veces, la primera debajo del bloqueo).
+            if ((root.action === "lock" || root.action === "suspend") && root.locked) return;
             if (root.dryRun) {
                 root.finish(root.action === "lock" || root.action === "suspend");
                 return;
@@ -111,10 +155,21 @@ Singleton {
         }
     }
 
+    function warnNoLock(suspending: bool): void {
+        const why = "La pantalla de bloqueo de Elaren no pudo cargarse (faltan los módulos de PAM o de bloqueo de Quickshell).";
+        console.warn("power: el bloqueo de Elaren no está disponible");
+        Quickshell.execDetached(["notify-send", "--urgency=critical", "--app-name=Elaren",
+            "--icon=system-lock-screen",
+            suspending ? "No se suspendió" : "Puede que la sesión no esté bloqueada",
+            suspending ? `${why} Al volver, la sesión habría quedado abierta.`
+                : `${why} Solo se bloquea si hay otro bloqueador, como hyprlock.`]);
+    }
+
     // Termina la acción; con `greet`, abre el telón con la bienvenida.
     function finish(greet: bool): void {
         fallback.stop();
         execTimer.stop();
+        suspendWait.stop();
         committed = false;
         action = "";
         if (greet) {
@@ -129,13 +184,36 @@ Singleton {
         onTriggered: root.welcome = false
     }
 
+    // ── Estado del bloqueo propio (Hyprland) ──────────────────────────────
+    // Tras recargar o relanzar estando bloqueada no hay cambio que avisar:
+    // se copia al arrancar.
+    Component.onCompleted: if (SessionLock.supported) root.locked = SessionLock.locked
+
+    Connections {
+        target: SessionLock
+        enabled: SessionLock.supported
+
+        function onSecureChanged(): void {
+            if (!SessionLock.secure || !suspendWait.running) return;
+            suspendWait.stop();
+            Quickshell.execDetached(root.commands.suspend);
+        }
+
+        function onLockedChanged(): void {
+            root.locked = SessionLock.locked;
+            // Desbloqueo: bienvenida (también tras hypridle o loginctl)
+            // (sin bienvenida si el compositor no llegó a bloquear).
+            if (!SessionLock.locked) root.finish(!SessionLock.failed && Theme.anim.scale > 0);
+        }
+    }
+
     // ── Estado del bloqueo de KDE ─────────────────────────────────────────
     // Consulta directa (al arrancar y, mientras está bloqueada, cada pocos
     // segundos: si se perdiera la señal de desbloqueo, el telón negro que
     // queda debajo del bloqueador no puede quedarse puesto).
     Process {
         id: lockQuery
-        running: true
+        running: !SessionLock.supported
         command: ["busctl", "--user", "call", "org.freedesktop.ScreenSaver", "/ScreenSaver",
             "org.freedesktop.ScreenSaver", "GetActive"]
         stdout: SplitParser {
@@ -153,13 +231,13 @@ Singleton {
     Timer {
         interval: 2500
         repeat: true
-        running: root.locked
+        running: root.locked && !SessionLock.supported
         onTriggered: lockQuery.running = true
     }
 
     Process {
         id: monitor
-        running: true
+        running: !SessionLock.supported
         command: ["gdbus", "monitor", "--session", "--dest", "org.freedesktop.ScreenSaver", "--object-path", "/ScreenSaver"]
         stdout: SplitParser {
             onRead: line => {
@@ -174,7 +252,7 @@ Singleton {
                 }
             }
         }
-        onExited: monitorRestart.start()
+        onExited: if (!SessionLock.supported) monitorRestart.start()
     }
     Timer {
         id: monitorRestart
