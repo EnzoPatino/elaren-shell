@@ -19,10 +19,11 @@ import Quickshell.Io
 //   - antes de suspender (PrepareForSleep de logind, p. ej. al cerrar la tapa)
 //   - al arrancar, si logind dice que la sesión ya estaba bloqueada (la
 //     shell se cayó o se relanzó estando bloqueada)
-// Desbloquea:
-//   - la contraseña correcta en la pantalla
-//   - `loginctl unlock-sessions` (por ejemplo desde otra TTY, si algo falla;
-//     sin "s" y sin número desbloquearía la sesión de esa TTY, no esta)
+// Desbloquea SOLO la contraseña correcta en la pantalla. La señal Unlock de
+// logind (`loginctl unlock-session[s]`) se ignora a propósito, como hace
+// hyprlock: si no, cualquier programa del usuario podría saltear la
+// contraseña. Para salir si algo se traba, ver README ("Bloqueo en
+// Hyprland").
 Singleton {
     id: root
 
@@ -67,11 +68,12 @@ Singleton {
         setLockedHint(true);
     }
 
-    // Solo para modules/lock (tras PAM) y para la señal Unlock de logind.
+    // Solo para modules/lock, tras verificar la contraseña con PAM.
     function unlock(): void {
         if (!locked) return;
-        // Si alguien desbloqueó, la máquina está despierta: aunque se haya
-        // perdido PrepareForSleep(false), el inhibidor tiene que volver.
+        // Si se desbloqueó con la contraseña, la máquina está despierta:
+        // aunque se haya perdido PrepareForSleep(false), el inhibidor tiene
+        // que volver.
         if (!failed) preparingSleep = false;
         release();
         setLockedHint(false);
@@ -89,15 +91,22 @@ Singleton {
     function fail(): void {
         if (!locked) return;
         console.warn("sessionlock: el compositor no confirmó el bloqueo");
+        // `failed` vale solo durante este desbloqueo (Power lo lee al recibir
+        // lockedChanged para no mostrar la bienvenida). Si quedara en true,
+        // un cierre de tapa posterior soltaría el inhibidor antes de tiempo.
         failed = true;
         unlock();
+        failed = false;
     }
 
     // logind recuerda si la sesión está bloqueada (lo usan otros programas,
     // p. ej. para no mostrar notificaciones).
+    // Usa la misma sesión que encontró scripts/logind-monitor.sh.
+    readonly property string hintPath: sessionPath !== "" ? sessionPath : "/org/freedesktop/login1/session/auto"
+
     function setLockedHint(value: bool): void {
         Quickshell.execDetached(["busctl", "--system", "call", "org.freedesktop.login1",
-            "/org/freedesktop/login1/session/auto", "org.freedesktop.login1.Session",
+            hintPath, "org.freedesktop.login1.Session",
             "SetLockedHint", "b", value ? "true" : "false"]);
     }
 
@@ -112,10 +121,11 @@ Singleton {
         lock();
     }
 
+    // Se consulta una vez, cuando el monitor ya encontró la sesión.
     Process {
-        running: root.supported
+        id: hintQuery
         command: ["busctl", "--system", "get-property", "org.freedesktop.login1",
-            "/org/freedesktop/login1/session/auto", "org.freedesktop.login1.Session", "LockedHint"]
+            root.hintPath, "org.freedesktop.login1.Session", "LockedHint"]
         stdout: SplitParser {
             onRead: line => {
                 if (line.trim() !== "b true") return;
@@ -125,7 +135,7 @@ Singleton {
         }
     }
 
-    // ── Señales de logind: Lock/Unlock de esta sesión y PrepareForSleep ───
+    // ── Señales de logind: Lock de esta sesión y PrepareForSleep ──────────
     // El script imprime primero "session <ruta>" y después todo lo que
     // emite logind.
     property string sessionPath: ""
@@ -137,16 +147,20 @@ Singleton {
         stdout: SplitParser {
             onRead: line => {
                 if (line.startsWith("session ")) {
+                    const first = root.sessionPath === "";
                     root.sessionPath = line.slice(8).trim();
+                    if (first) hintQuery.running = true;
                     logindStable.restart();
                 } else if (/\.Manager\.PrepareForSleep \(true/.test(line)) {
-                    root.preparingSleep = true;
+                    // Primero bloquear, después marcar: así readyToSleep no
+                    // suelta el inhibidor antes de pedir el bloqueo.
                     root.lock();
+                    root.preparingSleep = true;
                 } else if (/\.Manager\.PrepareForSleep \(false/.test(line)) {
                     root.preparingSleep = false;
-                } else if (root.sessionPath !== "" && line.startsWith(root.sessionPath + ":")) {
-                    if (/\.Session\.Lock \(\)/.test(line)) root.lock();
-                    else if (/\.Session\.Unlock \(\)/.test(line)) root.unlock();
+                } else if (root.sessionPath !== "" && line.startsWith(root.sessionPath + ":")
+                        && /\.Session\.Lock \(\)/.test(line)) {
+                    root.lock();
                 }
             }
         }
@@ -173,7 +187,9 @@ Singleton {
     // bloqueo no es posible, se suelta enseguida para no demorar la
     // suspensión. `cat` termina solo cuando Quickshell cierra el proceso.
     property bool preparingSleep: false
-    readonly property bool readyToSleep: preparingSleep && (secure || failed || !available)
+    // Listo para dormir: bloqueo confirmado, o no hay bloqueo posible (no
+    // está disponible o falló), y entonces no tiene sentido demorar.
+    readonly property bool readyToSleep: preparingSleep && (secure || !locked)
 
     Process {
         running: root.supported && root.available && !root.readyToSleep

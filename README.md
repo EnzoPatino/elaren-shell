@@ -20,7 +20,7 @@ Plasma se integra con KWin; en Hyprland usa su backend nativo de Quickshell.
 | Entorno | Compatibilidad | Integración disponible |
 |---|---|---|
 | KDE Plasma 6 sobre Wayland | Compatible | Ventanas y escritorios de KWin, bandeja del sistema, fondo de Plasma y pantalla de bloqueo opcional para kscreenlocker |
-| Hyprland | Compatible | Ventanas y escritorios mediante `Quickshell.Hyprland`, capturas con `grim`/`slurp` |
+| Hyprland | Compatible | Ventanas y escritorios mediante `Quickshell.Hyprland`, capturas con `grim`/`slurp` y bloqueo de sesión propio (`ext-session-lock` y PAM) |
 | X11 u otros compositores | No documentado ni verificado | No se ofrece soporte por ahora |
 
 Elaren es una shell complementaria ejecutada por Quickshell: no reemplaza
@@ -59,6 +59,18 @@ El comando corre en primer plano y recarga la shell al guardar archivos. Para
 cerrarla, usá `Ctrl+C`. Para iniciarla automáticamente en cada sesión, agregá
 `scripts/run.sh` a las aplicaciones de inicio de tu entorno; no hay todavía un
 instalador que configure ese paso.
+
+En Hyprland, agregá a `~/.config/hypr/hyprland.conf`:
+
+```ini
+exec-once = <ruta>/scripts/run.sh
+misc {
+    allow_session_lock_restore = true
+}
+```
+
+El bloqueo de sesión funciona sin instalar nada; para hypridle y qué hacer si
+se traba, mirá [Bloqueo en Hyprland](#bloqueo-en-hyprland).
 
 En KDE Plasma, la pantalla de bloqueo se activa por separado desde
 Configuración → Bloqueo o con `scripts/lockscreen.sh install`; sus detalles y
@@ -342,6 +354,9 @@ reloj sobre el fondo desenfocado y la contraseña se verifica con PAM
 
 - Bloquea desde la barra o el lanzador, con
   `qs ipc -p <ruta>/shell.qml call power lock` y con `loginctl lock-session`.
+- Se desbloquea **solo con tu contraseña**. `loginctl unlock-session` se
+  ignora a propósito (como en hyprlock): si no, cualquier programa podría
+  saltear la contraseña.
 - Con hypridle, que bloquee con `loginctl lock-session` y **sin `lock_cmd`**:
   Elaren ya escucha ese pedido. (`lock_cmd = loginctl lock-session` armaría
   un bucle: hypridle corre `lock_cmd` cada vez que alguien pide bloquear.)
@@ -378,19 +393,18 @@ misc {
 Si alguna vez quedara trabada, desde otra terminal (Ctrl+Alt+F3) e
 iniciando sesión:
 
-- **Elaren sigue andando** (por ejemplo, PAM no acepta la contraseña):
-  `loginctl unlock-sessions` (con "s": `unlock-session` sin número
-  desbloquearía la sesión de esa terminal, no la gráfica).
+- **Elaren sigue andando pero no acepta la contraseña** (por ejemplo, un
+  cambio en `/etc/pam.d/login`): no se puede desbloquear desde afuera.
+  Revisá la configuración de PAM desde esa terminal o usá el último
+  recurso.
 - **La shell se cayó** (Hyprland muestra una pantalla de error): con
   `allow_session_lock_restore` activado, relanzá Elaren con
   `hyprctl --instance 0 dispatch exec "qs -p <ruta>/shell.qml"` y volvé a
   la sesión gráfica (Ctrl+Alt+F1 o F2). Elaren vuelve a bloquear y se
   desbloquea con la contraseña. Si no lo tenías activado, primero
   `hyprctl --instance 0 keyword misc:allow_session_lock_restore 1`.
-  `loginctl unlock-sessions` no alcanza en este caso: el bloqueo lo sostiene
-  Hyprland, no Elaren. Como último recurso,
-  `hyprctl --instance 0 dispatch exit` cierra la sesión (se pierde lo que no
-  esté guardado).
+- **Último recurso:** `hyprctl --instance 0 dispatch exit` cierra la sesión
+  de Hyprland (se pierde lo que no esté guardado).
 
 ## Animaciones
 
@@ -423,8 +437,10 @@ iniciando sesión:
   multimedia (MPRIS), ventanas y escritorios (KWin), apps, wallpaper
 - `kwin/` y `scripts/kwin-bridge.py` — puente con KWin
 - `services/backends/` — integración específica por compositor (Hyprland)
-- `lockscreen/` y `scripts/lockscreen.sh` — pantalla de bloqueo (paquete
-  para kscreenlocker, no corre dentro de Quickshell)
+- `lockscreen/` y `scripts/lockscreen.sh` — pantalla de bloqueo de Plasma
+  (paquete para kscreenlocker, no corre dentro de Quickshell)
+- `modules/lock/`, `services/SessionLock.qml` y `scripts/logind-monitor.sh` —
+  bloqueo de sesión en Hyprland (`ext-session-lock`, PAM y señales de logind)
 - `branding/` — identidad visual de Elaren
 - `components/` — controles reutilizables y animaciones base
   (`Anim`, `CAnim`, `StateLayer`, `Reveal`, `RollingText`, `MaterialIcon`…)

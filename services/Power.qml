@@ -92,6 +92,10 @@ Singleton {
             // bloqueador (hyprlock) escuchando.
             if (root.action === "lock" && SessionLock.available) {
                 SessionLock.lock();
+                // También por logind, para que hypridle y otros se enteren
+                // (on_lock_cmd). Elaren recibe la misma señal y la ignora:
+                // ya está bloqueada.
+                Quickshell.execDetached(root.commands.lock);
             } else if (root.action === "suspend" && SessionLock.available) {
                 // Bloquear antes de dormir: al abrir la tapa tiene que estar
                 // la pantalla de bloqueo, no el escritorio.
