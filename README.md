@@ -67,7 +67,20 @@ exec-once = <ruta>/scripts/run.sh
 misc {
     allow_session_lock_restore = true
 }
+
+# Teclas de volumen y brillo: pasan por Elaren, que muestra el deslizador.
+$elaren = qs ipc -p <ruta>/shell.qml call
+bindel = , XF86AudioRaiseVolume, exec, $elaren volume up
+bindel = , XF86AudioLowerVolume, exec, $elaren volume down
+bindl  = , XF86AudioMute, exec, $elaren volume mute
+bindel = , XF86MonBrightnessUp, exec, $elaren brightness up
+bindel = , XF86MonBrightnessDown, exec, $elaren brightness down
 ```
+
+Sin PowerDevil (lo normal en Hyprland), el brillo se lee de
+`/sys/class/backlight` y se cambia con logind: no hace falta `brightnessctl`
+ni permisos extra. Si tu `hyprland.conf` ya tiene las teclas con `wpctl` o
+`brightnessctl`, reemplazá esas líneas por estas.
 
 El bloqueo de sesión funciona sin instalar nada; para hypridle y qué hacer si
 se traba, mirá [Bloqueo en Hyprland](#bloqueo-en-hyprland).

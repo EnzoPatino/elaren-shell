@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pipewire
 
 // Salida de audio por defecto (PipeWire).
@@ -36,5 +37,17 @@ Singleton {
 
     PwObjectTracker {
         objects: [root.sink]
+    }
+
+    // Teclas de volumen en Hyprland (ver README):
+    //   qs ipc -p <ruta>/shell.qml call volume up|down|mute
+    IpcHandler {
+        target: "volume"
+
+        function up(): void { root.changeVolume(0.05); }
+        function down(): void { root.changeVolume(-0.05); }
+        function mute(): void { root.toggleMute(); }
+        function set(percent: int): void { root.setVolume(percent / 100); }
+        function get(): int { return Math.round(root.volume * 100); }
     }
 }
