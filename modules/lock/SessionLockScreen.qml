@@ -53,10 +53,18 @@ Scope {
         // Si el compositor rechaza o termina el bloqueo, WlSessionLock vuelve
         // solo a `false`: hay que avisarle al servicio para no dejar el telón
         // de Power puesto sin forma de desbloquear.
-        onLockedChanged: if (!locked && SessionLock.locked) SessionLock.fail()
-        onSecureChanged: SessionLock.secure = secure
+        onLockedChanged: {
+            console.info("sessionlock: WlSessionLock.locked =", locked);
+            if (!locked && SessionLock.locked) SessionLock.fail();
+        }
+        onSecureChanged: {
+            console.info("sessionlock: el compositor confirmó el bloqueo =", secure);
+            SessionLock.secure = secure;
+        }
 
         WlSessionLockSurface {
+            Component.onCompleted: console.info("sessionlock: superficie creada en", screen?.name ?? "?")
+
             LockSurface {
                 anchors.fill: parent
                 lock: root
@@ -127,7 +135,10 @@ Scope {
     Timer {
         id: confirmTimeout
         interval: 5000
-        onTriggered: if (SessionLock.locked && !lock.secure) SessionLock.fail()
+        onTriggered: if (SessionLock.locked && !lock.secure) {
+            console.warn("sessionlock: 5 s sin confirmación; locked =", lock.locked);
+            SessionLock.fail();
+        }
     }
 
     Component.onCompleted: {
@@ -135,6 +146,7 @@ Scope {
         // emitir secureChanged.
         SessionLock.secure = lock.secure;
         SessionLock.available = true;
+        console.info("sessionlock: pantalla de bloqueo cargada");
     }
     Component.onDestruction: SessionLock.available = false
 }

@@ -91,6 +91,7 @@ Singleton {
             // pantalla no llegó a cargarse, loginctl: quizás hay otro
             // bloqueador (hyprlock) escuchando.
             if (root.action === "lock" && SessionLock.available) {
+                console.info("power: bloqueo con la pantalla de Elaren");
                 SessionLock.lock();
                 // También por logind, para que hypridle y otros se enteren
                 // (on_lock_cmd). Elaren recibe la misma señal y la ignora:
