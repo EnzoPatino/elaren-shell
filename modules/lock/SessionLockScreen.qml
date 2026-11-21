@@ -131,14 +131,15 @@ Scope {
         }
     }
 
-    // Sin confirmación del compositor en unos segundos, el bloqueo falló.
+    // Sin confirmación del compositor en unos segundos NO se desbloquea:
+    // eso abría la sesión sola. Se sigue bloqueada (la contraseña desbloquea
+    // igual) y solo se avisa en el registro. Rendirse queda para cuando el
+    // compositor rechaza el bloqueo de forma explícita (onLockedChanged).
     Timer {
         id: confirmTimeout
         interval: 5000
-        onTriggered: if (SessionLock.locked && !lock.secure) {
-            console.warn("sessionlock: 5 s sin confirmación; locked =", lock.locked);
-            SessionLock.fail();
-        }
+        onTriggered: if (SessionLock.locked && !lock.secure)
+            console.warn("sessionlock: 5 s sin confirmación del compositor; sigo bloqueada. locked =", lock.locked);
     }
 
     Component.onCompleted: {

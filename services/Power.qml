@@ -92,11 +92,10 @@ Singleton {
             // bloqueador (hyprlock) escuchando.
             if (root.action === "lock" && SessionLock.available) {
                 console.info("power: bloqueo con la pantalla de Elaren");
+                // Sin `loginctl lock-session`: con un `lock_cmd` en hypridle
+                // lanzaría hyprlock en paralelo y le disputaría el bloqueo a
+                // Elaren (y si gana hyprlock, Elaren se retira).
                 SessionLock.lock();
-                // También por logind, para que hypridle y otros se enteren
-                // (on_lock_cmd). Elaren recibe la misma señal y la ignora:
-                // ya está bloqueada.
-                Quickshell.execDetached(root.commands.lock);
             } else if (root.action === "suspend" && SessionLock.available) {
                 // Bloquear antes de dormir: al abrir la tapa tiene que estar
                 // la pantalla de bloqueo, no el escritorio.
@@ -134,10 +133,9 @@ Singleton {
         interval: 5000
         onTriggered: {
             console.warn("power: el bloqueo no se confirmó; no suspendo");
-            // Levantar el telón: fail() lo hace a través del desbloqueo; si
-            // ya no estaba bloqueada, se termina la acción acá.
-            if (SessionLock.locked) SessionLock.fail();
-            else root.finish(false);
+            // Sin desbloquear: la sesión sigue bloqueada y se abre con la
+            // contraseña. Solo se termina la acción de suspender.
+            root.finish(false);
         }
     }
 

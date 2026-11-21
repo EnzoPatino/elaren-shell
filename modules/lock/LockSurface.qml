@@ -44,9 +44,15 @@ Item {
     Component.onCompleted: input.forceActiveFocus()
 
     // ── Fondo ────────────────────────────────────────────────────────────
+    // Sin imagen (en Hyprland el fondo puede no resolverse desde la config
+    // de Plasma) no queda una superficie lisa casi negra: degradé de acento.
     Rectangle {
         anchors.fill: parent
-        color: Theme.surface
+        gradient: Gradient {
+            GradientStop { position: 0; color: Qt.darker(Theme.primary, 2.2) }
+            GradientStop { position: 0.55; color: Theme.surface }
+            GradientStop { position: 1; color: Qt.darker(Theme.secondary, 2.4) }
+        }
     }
 
     Image {
@@ -57,6 +63,9 @@ Item {
         asynchronous: true
         cache: false
         visible: !Config.lockscreenBlur
+        onStatusChanged: if (status === Image.Error || status === Image.Ready)
+            console.info("sessionlock: fondo", status === Image.Ready ? "cargado" : "con error", source)
+        Component.onCompleted: if (Wallpaper.source === "") console.warn("sessionlock: sin fondo (Wallpaper.source vacío)")
     }
 
     MultiEffect {
@@ -73,7 +82,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: "black"
-        opacity: 0.25 + 0.2 * root.ui
+        opacity: 0.12 + 0.2 * root.ui
     }
 
     // ── Entrada: cualquier movimiento o clic despierta la interfaz ───────
