@@ -39,15 +39,15 @@ KWin; en Hyprland usa el backend nativo de Quickshell.
 
 ### En KDE Plasma 6
 
-[![Elaren en KDE Plasma 6: barra, isla, widgets y ajustes](media/elaren-kde.jpg)](media/elaren-kde.mp4)
+https://github.com/user-attachments/assets/0aace2cf-c530-4b82-ad25-3599179a845b
 
-_Tocá la imagen para ver el video (2:28)._
+_Barra, isla, widgets y ajustes (2:28)._
 
 ### En Hyprland
 
-[![Elaren en Hyprland: isla, visualizador, fondos y bloqueo de sesión](media/elaren-hyprland.jpg)](media/elaren-hyprland.mp4)
+https://github.com/user-attachments/assets/cc614bc4-d27b-4fdf-a18b-148be8bb7fef
 
-_Tocá la imagen para ver el video (2:00)._
+_Isla, visualizador, fondos y bloqueo de sesión (2:00)._
 
 ## Qué trae
 
