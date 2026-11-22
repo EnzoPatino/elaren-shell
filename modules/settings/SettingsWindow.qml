@@ -1205,10 +1205,24 @@ PanelWindow {
                     onToggled: value => Config.barShowCaffeine = value
                 }
                 SwitchRow {
+                    icon: "speed"
+                    title: "Perfil de energía"
+                    description: "Ahorro, Equilibrado o Rendimiento; clic para cambiarlo"
+                    checked: Config.barShowPowerProfile
+                    onToggled: value => Config.barShowPowerProfile = value
+                }
+                SwitchRow {
                     icon: "wifi"
                     title: "Red"
                     checked: Config.barShowNetwork
                     onToggled: value => Config.barShowNetwork = value
+                }
+                SwitchRow {
+                    icon: "bluetooth"
+                    title: "Bluetooth"
+                    description: "Clic para prenderlo o apagarlo; clic derecho abre los dispositivos"
+                    checked: Config.barShowBluetooth
+                    onToggled: value => Config.barShowBluetooth = value
                 }
                 SwitchRow {
                     icon: "brightness_6"

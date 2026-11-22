@@ -366,9 +366,19 @@ PanelWindow {
                             visible: Config.barShowCaffeine
                         }
 
+                        PowerProfileWidget {
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: PowerProfile.available && Config.barShowPowerProfile
+                        }
+
                         NetworkWidget {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: Config.barShowNetwork
+                        }
+
+                        BluetoothWidget {
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: Bluetooth.available && Config.barShowBluetooth
                         }
 
                         BrightnessWidget {

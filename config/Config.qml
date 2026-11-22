@@ -86,6 +86,8 @@ Singleton {
     property alias barShowCaffeine: store.barShowCaffeine
     property alias barShowGameMode: store.barShowGameMode
     property alias barShowNetwork: store.barShowNetwork
+    property alias barShowBluetooth: store.barShowBluetooth
+    property alias barShowPowerProfile: store.barShowPowerProfile
     property alias barShowBrightness: store.barShowBrightness
     property alias barShowVolume: store.barShowVolume
     property alias barShowBattery: store.barShowBattery
@@ -177,6 +179,8 @@ Singleton {
         barShowCaffeine: true,
         barShowGameMode: true,
         barShowNetwork: true,
+        barShowBluetooth: true,
+        barShowPowerProfile: true,
         barShowBrightness: true,
         barShowVolume: true,
         barShowBattery: true,
@@ -273,6 +277,8 @@ Singleton {
             property bool barShowCaffeine: true
             property bool barShowGameMode: true
             property bool barShowNetwork: true
+            property bool barShowBluetooth: true
+            property bool barShowPowerProfile: true
             property bool barShowBrightness: true
             property bool barShowVolume: true
             property bool barShowBattery: true
