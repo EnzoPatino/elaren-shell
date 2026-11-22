@@ -6,7 +6,7 @@ import "../config"
 import "../theme"
 
 // Modo gaming: mientras está activo, Elaren gasta lo mínimo para dejarle la
-// GPU y el compositor al juego (ver docs/propuesta-modo-gaming.md).
+// GPU y el compositor al juego.
 //
 // - Se descargan el visualizador y los widgets de escritorio.
 // - Se apagan el desenfoque de KWin (el vidrio se vuelve más opaco) y las

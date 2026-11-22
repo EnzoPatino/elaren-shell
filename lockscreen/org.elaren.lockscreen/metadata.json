@@ -9,7 +9,7 @@
         "Description": "Pantalla de bloqueo de Elaren para kscreenlocker",
         "Icon": "system-lock-screen",
         "Id": "org.elaren.lockscreen",
-        "License": "GPL-2.0+",
+        "License": "GPL-3.0+",
         "Name": "Elaren (bloqueo)",
         "Version": "1"
     },

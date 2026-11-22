@@ -64,13 +64,42 @@ core.*
 .kdev4/
 *.kdev4
 
-# Instrucciones locales para agentes; no publicar en el repositorio
-/AGENTS.md
-
 # Archivos del sistema
 .DS_Store
 ._*
 Thumbs.db
 Desktop.ini
 .directory
+
+# Python (scripts/): cachés y entornos virtuales
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Instrucciones y configuración local de agentes de IA; no se publican
+/AGENTS.md
+/CLAUDE.md
+/.claude/
 .superpowers/
+.codex/
+.cursor/
+.aider*
+
+# Grabaciones, capturas y archivos sueltos en la raíz.
+# Los videos del README van comprimidos en media/.
+/*.mp4
+/*.webm
+/*.mkv
+/*.mov
+/*.gif
+/*.png
+/*.jpg
+/*.jpeg
+WhatsApp*
+Kooha-*
+Screenshot*
+Captura*
+
+# Copias de configuración de usuario (la real vive en ~/.config/elaren/)
+settings.json
