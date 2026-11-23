@@ -37,16 +37,17 @@ PanelWindow {
     }
     BackgroundEffect.blurRegion: Theme.gaming ? null : blurArea
 
+    // Ordenadas por grupo: la barra lateral rotula cada grupo nuevo.
     readonly property list<var> pages: [
-        { id: "visualizer", name: "Visualizador", icon: "graphic_eq", description: "Barras y ondas sobre el fondo mientras suena música" },
-        { id: "widgets", name: "Widgets", icon: "widgets", description: "Reloj, saludo, música, sistema y clima en el escritorio" },
-        { id: "appearance", name: "Apariencia", icon: "palette", description: "Color de acento y animaciones" },
-        { id: "bar", name: "Barra superior", icon: "toolbar", description: "Qué módulos se muestran" },
-        { id: "dock", name: "Dock", icon: "space_dashboard", description: "Comportamiento y tamaño de los iconos" },
-        { id: "wallpaper", name: "Fondo", icon: "wallpaper", description: "Quién dibuja el fondo y su movimiento" },
-        { id: "gaming", name: "Modo gaming", icon: "sports_esports", description: "Qué se apaga mientras jugás y cuándo se activa" },
-        { id: "lockscreen", name: "Bloqueo", icon: "lock", description: "Pantalla de bloqueo de Elaren" },
-        { id: "about", name: "Acerca de", icon: "info", description: "Archivo de configuración y restablecer" }
+        { id: "appearance", group: "Personalización", name: "Apariencia", icon: "palette", description: "Color de acento y animaciones" },
+        { id: "wallpaper", group: "Personalización", name: "Fondo", icon: "wallpaper", description: "Quién dibuja el fondo y su movimiento" },
+        { id: "bar", group: "Escritorio", name: "Barra superior", icon: "toolbar", description: "Ubicación, módulos, avatar e isla central" },
+        { id: "dock", group: "Escritorio", name: "Dock", icon: "space_dashboard", description: "Comportamiento y tamaño de los iconos" },
+        { id: "widgets", group: "Escritorio", name: "Widgets", icon: "widgets", description: "Reloj, saludo, música, sistema y clima en el escritorio" },
+        { id: "visualizer", group: "Escritorio", name: "Visualizador", icon: "graphic_eq", description: "Barras y ondas sobre el fondo mientras suena música" },
+        { id: "lockscreen", group: "Sistema", name: "Bloqueo", icon: "lock", description: "Pantalla de bloqueo de Elaren" },
+        { id: "gaming", group: "Sistema", name: "Modo gaming", icon: "sports_esports", description: "Qué se apaga mientras jugás y cuándo se activa" },
+        { id: "about", group: "Sistema", name: "Acerca de", icon: "info", description: "Archivo de configuración y restablecer" }
     ]
     readonly property var currentPage: pages.find(p => p.id === Settings.page) ?? pages[0]
     property int slideDirection: 1
@@ -219,9 +220,16 @@ PanelWindow {
                 anchors.bottom: parent.bottom
                 width: parent.width
                 spacing: 2
-                interactive: false
+                // En pantallas bajas los rótulos de grupo hacen que la lista
+                // no entre: ahí se puede desplazar para llegar a todas.
+                interactive: contentHeight > height
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
                 model: root.pages
                 currentIndex: root.pages.findIndex(p => p.id === Settings.page)
+                // El resaltado no sigue al ítem, así que hay que mantener
+                // visible la página abierta (por ejemplo, al abrirla por IPC).
+                onCurrentIndexChanged: if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain)
 
                 highlightFollowsCurrentItem: false
                 highlight: Rectangle {
@@ -229,7 +237,9 @@ PanelWindow {
                     height: 42
                     radius: Theme.radius.normal + 2
                     color: Qt.alpha(Theme.primary, 0.16)
-                    y: nav.currentItem?.y ?? 0
+                    // El rótulo de grupo va arriba del ítem: el resaltado
+                    // se alinea con la parte de abajo.
+                    y: nav.currentItem ? nav.currentItem.y + nav.currentItem.height - height : 0
 
                     Behavior on y { Anim { duration: Theme.anim.slow; easing.bezierCurve: Theme.anim.expressive } }
 
@@ -247,13 +257,30 @@ PanelWindow {
                     id: navItem
 
                     required property var modelData
+                    required property int index
                     readonly property bool active: ListView.isCurrentItem
+                    readonly property bool firstOfGroup: index === 0 || root.pages[index - 1].group !== modelData.group
 
                     width: nav.width
-                    height: 42
+                    height: 42 + (firstOfGroup ? groupLabel.height : 0)
+
+                    StyledText {
+                        id: groupLabel
+                        visible: navItem.firstOfGroup
+                        x: 14
+                        height: navItem.index === 0 ? 22 : 34
+                        verticalAlignment: Text.AlignBottom
+                        bottomPadding: 6
+                        text: navItem.modelData.group.toUpperCase()
+                        color: Theme.textMuted
+                        font.pixelSize: 10
+                        font.weight: Font.Bold
+                        font.letterSpacing: 1.2
+                    }
 
                     Row {
-                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.bottom: parent.bottom
+                        height: 42
                         x: 14
                         spacing: 12
 
@@ -272,6 +299,10 @@ PanelWindow {
                     }
 
                     StateLayer {
+                        anchors.fill: undefined
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 42
                         radius: Theme.radius.normal + 2
                         onClicked: root.goTo(navItem.modelData.id)
                     }
@@ -358,16 +389,16 @@ PanelWindow {
                     id: pageLoader
                     width: scroller.width - 8
                     sourceComponent: {
-                        switch (Settings.page) {
+                        switch (root.currentPage.id) {
+                        case "visualizer": return visualizerPage;
                         case "widgets": return widgetsPage;
-                        case "appearance": return appearancePage;
                         case "bar": return barPage;
                         case "dock": return dockPage;
                         case "wallpaper": return wallpaperPage;
                         case "gaming": return gamingPage;
                         case "lockscreen": return lockscreenPage;
                         case "about": return aboutPage;
-                        default: return visualizerPage;
+                        default: return appearancePage;
                         }
                     }
                     onLoaded: scroller.contentY = 0
@@ -462,6 +493,19 @@ PanelWindow {
                             elide: Text.ElideRight
                         }
                     }
+                }
+            }
+
+            SettingsCard {
+                title: "General"
+                icon: "visibility"
+
+                SwitchRow {
+                    icon: "visibility"
+                    title: "Mostrar visualizador"
+                    description: "Aparece sobre el fondo mientras suena música"
+                    checked: Config.visualizerEnabled
+                    onToggled: value => Config.visualizerEnabled = value
                 }
             }
 
@@ -577,13 +621,6 @@ PanelWindow {
                 title: "Color y forma"
                 icon: "brush"
 
-                SwitchRow {
-                    icon: "visibility"
-                    title: "Mostrar visualizador"
-                    description: "Aparece sobre el fondo mientras suena música"
-                    checked: Config.visualizerEnabled
-                    onToggled: value => Config.visualizerEnabled = value
-                }
                 ChoiceRow {
                     icon: "colorize"
                     title: "Color"
@@ -763,8 +800,8 @@ PanelWindow {
             spacing: 20
 
             SettingsCard {
-                title: "Widgets"
-                icon: "widgets"
+                title: "Reloj y saludo"
+                icon: "schedule"
 
                 SwitchRow {
                     icon: "schedule"
@@ -799,13 +836,39 @@ PanelWindow {
                     checked: Config.widgetGreetingEnabled
                     onToggled: value => Config.widgetGreetingEnabled = value
                 }
+            }
+
+            SettingsCard {
+                title: "Música"
+                icon: "album"
+
                 SwitchRow {
                     icon: "album"
-                    title: "Música"
-                    description: "Portada, progreso y controles (solo con un reproductor abierto)"
+                    title: "Tarjeta de música"
+                    description: "Solo aparece con un reproductor abierto"
                     checked: Config.widgetMediaEnabled
                     onToggled: value => Config.widgetMediaEnabled = value
                 }
+                ChoiceRow {
+                    visible: Config.widgetMediaEnabled
+                    icon: "lyrics"
+                    title: "Qué muestra"
+                    description: Config.widgetMediaMode === "lyrics"
+                        ? "La letra en tiempo real (LRCLIB). Si no hay letra sincronizada, la tarjeta normal"
+                        : "Portada, progreso y controles"
+                    current: Config.widgetMediaMode
+                    options: [
+                        { value: "player", label: "Reproductor", icon: "music_note" },
+                        { value: "lyrics", label: "Letra", icon: "lyrics" }
+                    ]
+                    onChosen: value => Config.widgetMediaMode = value
+                }
+            }
+
+            SettingsCard {
+                title: "Información"
+                icon: "info"
+
                 SwitchRow {
                     icon: "monitor_heart"
                     title: "Monitor del sistema"
@@ -981,6 +1044,17 @@ PanelWindow {
                     ]
                     onChosen: value => Config.barPosition = value
                 }
+                ChoiceRow {
+                    icon: "align_horizontal_center"
+                    title: "Qué va en el medio"
+                    description: "La barra entera, o el avatar con el reloj"
+                    current: Config.barAlignment
+                    options: [
+                        { value: "center", label: "Barra" },
+                        { value: "clock", label: "Reloj" }
+                    ]
+                    onChosen: value => Config.barAlignment = value
+                }
 
                 Item {
                     width: parent.width
@@ -1031,118 +1105,7 @@ PanelWindow {
             }
 
             SettingsCard {
-                title: "Isla central"
-                icon: "account_circle"
-
-                ChoiceRow {
-                    icon: "align_horizontal_center"
-                    title: "Qué va en el medio"
-                    description: "La barra entera, o el avatar con el reloj"
-                    current: Config.barAlignment
-                    options: [
-                        { value: "center", label: "Barra" },
-                        { value: "clock", label: "Reloj" }
-                    ]
-                    onChosen: value => Config.barAlignment = value
-                }
-                SwitchRow {
-                    icon: "account_circle"
-                    title: "Avatar"
-                    description: "Junto al reloj"
-                    checked: Config.barShowAvatar
-                    onToggled: value => Config.barShowAvatar = value
-                }
-                SwitchRow {
-                    icon: "ads_click"
-                    title: "El avatar sigue al cursor"
-                    checked: Config.barAvatarFollow
-                    onToggled: value => Config.barAvatarFollow = value
-                }
-                SwitchRow {
-                    icon: "history"
-                    title: "Recordar la última pestaña"
-                    description: "Si está apagado, la isla siempre abre en Inicio"
-                    checked: Config.barIslandRemember
-                    onToggled: value => Config.barIslandRemember = value
-                }
-            }
-
-            SettingsCard {
-                title: "Pestañas de la isla"
-                icon: "tab"
-
-                SwitchRow {
-                    icon: "album"
-                    title: "Música"
-                    description: "Solo aparece si hay un reproductor activo"
-                    checked: Config.barTabMusic
-                    onToggled: value => Config.barTabMusic = value
-                }
-                SwitchRow {
-                    icon: "monitor_heart"
-                    title: "Recursos"
-                    description: "CPU, memoria, red, GPU y sensores"
-                    checked: Config.barTabSystem
-                    onToggled: value => Config.barTabSystem = value
-                }
-                SwitchRow {
-                    icon: "apps"
-                    title: "Bandeja"
-                    description: "Apps de la bandeja del sistema"
-                    checked: Config.barTabTray
-                    onToggled: value => Config.barTabTray = value
-                }
-                SwitchRow {
-                    icon: "calendar_month"
-                    title: "Calendario"
-                    checked: Config.barTabCalendar
-                    onToggled: value => Config.barTabCalendar = value
-                }
-            }
-
-            SettingsCard {
-                title: "Avatar"
-                icon: "face"
-
-                ChoiceRow {
-                    icon: "image"
-                    title: "Imagen"
-                    description: Config.barAvatarSource === "face" ? "Tu foto de ~/.face (la de tu usuario de Plasma)"
-                        : Config.barAvatarSource === "plasma" ? "Uno de los avatares que trae Plasma"
-                        : "Un personaje dibujado por la shell; sus ojos siguen al cursor"
-                    current: Config.barAvatarSource
-                    options: [
-                        { value: "drawn", label: "Dibujado" },
-                        { value: "plasma", label: "Galería" },
-                        { value: "face", label: "Mi foto" }
-                    ]
-                    onChosen: value => Config.barAvatarSource = value
-                }
-
-                DrawnAvatarPicker {
-                    visible: Config.barAvatarSource === "drawn"
-                }
-
-                AvatarPicker {
-                    visible: Config.barAvatarSource === "plasma"
-                }
-
-                ChoiceRow {
-                    icon: "interests"
-                    title: "Forma del avatar"
-                    current: Config.barAvatarShape
-                    options: [
-                        { value: "circle", label: "Círculo" },
-                        { value: "squircle", label: "Squircle" },
-                        { value: "flower", label: "Flor" },
-                        { value: "hexagon", label: "Hexágono" }
-                    ]
-                    onChosen: value => Config.barAvatarShape = value
-                }
-            }
-
-            SettingsCard {
-                title: "Módulos"
+                title: "Módulos (izquierda)"
                 icon: "view_module"
 
                 SwitchRow {
@@ -1152,6 +1115,7 @@ PanelWindow {
                     onToggled: value => Config.barShowWorkspaces = value
                 }
                 ChoiceRow {
+                    visible: Config.barShowWorkspaces
                     icon: "format_list_numbered"
                     title: "Rótulos de escritorios"
                     description: "Cómo se ve cada escritorio en la barra"
@@ -1166,7 +1130,7 @@ PanelWindow {
                     onChosen: value => Config.barWorkspaceStyle = value
                 }
                 SliderRow {
-                    visible: Compositor.hyprland
+                    visible: Compositor.hyprland && Config.barShowWorkspaces
                     icon: "grid_view"
                     title: "Espacios de trabajo"
                     description: "Cuántos se muestran aunque estén vacíos"
@@ -1241,6 +1205,103 @@ PanelWindow {
                     title: "Batería"
                     checked: Config.barShowBattery
                     onToggled: value => Config.barShowBattery = value
+                }
+            }
+
+            SettingsCard {
+                title: "Avatar"
+                icon: "face"
+
+                SwitchRow {
+                    icon: "account_circle"
+                    title: "Mostrar avatar"
+                    description: "Junto al reloj de la isla central"
+                    checked: Config.barShowAvatar
+                    onToggled: value => Config.barShowAvatar = value
+                }
+                ChoiceRow {
+                    visible: Config.barShowAvatar
+                    icon: "image"
+                    title: "Imagen"
+                    description: Config.barAvatarSource === "face" ? "Tu foto de ~/.face (la de tu usuario de Plasma)"
+                        : Config.barAvatarSource === "plasma" ? "Uno de los avatares que trae Plasma"
+                        : "Un personaje dibujado por la shell; sus ojos siguen al cursor"
+                    current: Config.barAvatarSource
+                    options: [
+                        { value: "drawn", label: "Dibujado" },
+                        { value: "plasma", label: "Galería" },
+                        { value: "face", label: "Mi foto" }
+                    ]
+                    onChosen: value => Config.barAvatarSource = value
+                }
+
+                DrawnAvatarPicker {
+                    visible: Config.barShowAvatar && Config.barAvatarSource === "drawn"
+                }
+
+                AvatarPicker {
+                    visible: Config.barShowAvatar && Config.barAvatarSource === "plasma"
+                }
+
+                ChoiceRow {
+                    visible: Config.barShowAvatar
+                    icon: "interests"
+                    title: "Forma"
+                    current: Config.barAvatarShape
+                    options: [
+                        { value: "circle", label: "Círculo" },
+                        { value: "squircle", label: "Squircle" },
+                        { value: "flower", label: "Flor" },
+                        { value: "hexagon", label: "Hexágono" }
+                    ]
+                    onChosen: value => Config.barAvatarShape = value
+                }
+                SwitchRow {
+                    visible: Config.barShowAvatar
+                    icon: "ads_click"
+                    title: "Sigue al cursor"
+                    checked: Config.barAvatarFollow
+                    onToggled: value => Config.barAvatarFollow = value
+                }
+            }
+
+            SettingsCard {
+                title: "Isla central"
+                icon: "tab"
+
+                SwitchRow {
+                    icon: "history"
+                    title: "Recordar la última pestaña"
+                    description: "Si está apagado, la isla siempre abre en Inicio"
+                    checked: Config.barIslandRemember
+                    onToggled: value => Config.barIslandRemember = value
+                }
+                SwitchRow {
+                    icon: "album"
+                    title: "Pestaña Música"
+                    description: "Solo aparece si hay un reproductor activo"
+                    checked: Config.barTabMusic
+                    onToggled: value => Config.barTabMusic = value
+                }
+                SwitchRow {
+                    icon: "monitor_heart"
+                    title: "Pestaña Recursos"
+                    description: "CPU, memoria, red, GPU y sensores"
+                    checked: Config.barTabSystem
+                    onToggled: value => Config.barTabSystem = value
+                }
+                SwitchRow {
+                    icon: "apps"
+                    title: "Pestaña Bandeja"
+                    description: "Apps de la bandeja del sistema"
+                    checked: Config.barTabTray
+                    onToggled: value => Config.barTabTray = value
+                }
+                SwitchRow {
+                    icon: "calendar_month"
+                    title: "Pestaña Calendario"
+                    checked: Config.barTabCalendar
+                    onToggled: value => Config.barTabCalendar = value
                 }
             }
 

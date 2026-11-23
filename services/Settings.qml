@@ -10,7 +10,7 @@ Singleton {
     id: root
 
     property bool open: false
-    property string page: "visualizer"
+    property string page: "appearance"
 
     function toggle(): void { open = !open; }
     function show(name: string): void {
