@@ -276,7 +276,8 @@ otros), uno de la galería de Plasma (`/usr/share/plasma/avatars`) o tu foto
 de `~/.face`, con forma de círculo, squircle, flor o hexágono.
 
 Las letras salen de [LRCLIB](https://lrclib.net) (con caché en
-`~/.cache/elaren/lyrics`) y solo se consultan con la pestaña Letra abierta.
+`~/.cache/elaren/lyrics`) y solo se consultan con la pestaña Letra abierta o
+con el widget de música en modo Letra.
 
 ### Lanzador
 
@@ -314,7 +315,9 @@ Sobre el fondo y debajo de las ventanas (Configuración → Widgets):
   palabras ("Son las diez y cuarto").
 - **Saludo**: buenos días / tardes / noches, con clima y el tema que suena.
 - **Música**: portada, progreso, controles y mini-espectro (solo con un
-  reproductor abierto).
+  reproductor abierto). En modo **Letra** muestra solo la letra sincronizada en
+  tiempo real (línea anterior, actual y siguiente); si no hay letra
+  sincronizada, vuelve a la tarjeta normal.
 - **Monitor del sistema**: CPU, memoria, temperatura, red y tiempo encendido.
 - **Clima**: actual y 3 días, vía [Open-Meteo](https://open-meteo.com) para la
   ciudad que configures (solo se envía el nombre de la ciudad).

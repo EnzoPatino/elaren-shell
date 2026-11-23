@@ -37,7 +37,7 @@ InlineCard {
 
     Binding {
         target: Lyrics
-        property: "wanted"
+        property: "popupWanted"
         value: root.visible && root.lyricsMode
     }
 

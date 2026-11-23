@@ -67,6 +67,9 @@ Singleton {
     property alias widgetMediaEnabled: store.widgetMediaEnabled
     property alias widgetMediaX: store.widgetMediaX
     property alias widgetMediaY: store.widgetMediaY
+    // Qué muestra la tarjeta de música: "player" (portada y controles) |
+    // "lyrics" (solo la letra sincronizada, si LRCLIB la tiene)
+    property alias widgetMediaMode: store.widgetMediaMode
     property alias widgetSystemEnabled: store.widgetSystemEnabled
     property alias widgetSystemX: store.widgetSystemX
     property alias widgetSystemY: store.widgetSystemY
@@ -210,6 +213,7 @@ Singleton {
         widgetMediaEnabled: true,
         widgetMediaX: 0.03,
         widgetMediaY: 0.72,
+        widgetMediaMode: "player",
         widgetSystemEnabled: false,
         widgetSystemX: 0.97,
         widgetSystemY: 0.45,
@@ -310,6 +314,7 @@ Singleton {
             property bool widgetMediaEnabled: true
             property real widgetMediaX: 0.03
             property real widgetMediaY: 0.72
+            property string widgetMediaMode: "player"
             property bool widgetSystemEnabled: false
             property real widgetSystemX: 0.97
             property real widgetSystemY: 0.45
