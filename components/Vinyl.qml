@@ -23,6 +23,9 @@ Item {
     // Con la vista oculta no se anima nada (la ventana del popup sigue
     // existiendo aunque esté cerrada y el reloj de animación seguiría corriendo).
     property bool active: true
+    // Escala de animación: la de Theme salvo que la vista pida otra (el
+    // bloqueo usa la de la persona, que no apaga el modo gaming).
+    property real animScale: Theme.anim.scale
 
     signal scratched(int direction)
     signal clicked()
@@ -39,13 +42,13 @@ Item {
     property real speed: spinning ? 1 : 0
     Behavior on speed {
         NumberAnimation {
-            duration: (root.spinning ? 900 : 1700) * Theme.anim.scale
+            duration: (root.spinning ? 900 : 1700) * root.animScale
             easing.type: root.spinning ? Easing.InOutQuad : Easing.OutCubic
         }
     }
 
     FrameAnimation {
-        running: root.active && root.speed > 0.001 && Theme.anim.scale > 0
+        running: root.active && root.speed > 0.001 && root.animScale > 0
         onTriggered: disc.rotation = (disc.rotation + frameTime * 140 * root.speed) % 360
     }
 
@@ -187,7 +190,7 @@ Item {
 
         Behavior on rotation {
             NumberAnimation {
-                duration: (root.spinning ? 750 : 600) * Theme.anim.scale
+                duration: (root.spinning ? 750 : 600) * root.animScale
                 easing.type: root.spinning ? Easing.OutBack : Easing.InOutCubic
                 easing.overshoot: 1.4
             }

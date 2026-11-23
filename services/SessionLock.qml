@@ -1,3 +1,12 @@
+// ┌─ NO TOCAR ───────────────────────────────────────────────────────────┐
+// │ Pantalla de bloqueo de Hyprland (ext-session-lock). Funciona y está  │
+// │ terminada: no la cambies, ni la reemplaces ni la "simplifiques" sin  │
+// │ que el autor lo pida explícitamente. La de Plasma es otra, aparte    │
+// │ (lockscreen/org.elaren.lockscreen).                                  │
+// │ Archivos: modules/lock/ (LockSurface.qml, SessionLockScreen.qml,     │
+// │ qmldir) y services/SessionLock.qml.                                  │
+// └──────────────────────────────────────────────────────────────────────┘
+
 pragma Singleton
 import QtQuick
 import Quickshell

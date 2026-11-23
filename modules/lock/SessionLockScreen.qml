@@ -1,7 +1,18 @@
+// ┌─ NO TOCAR ───────────────────────────────────────────────────────────┐
+// │ Pantalla de bloqueo de Hyprland (ext-session-lock). Funciona y está  │
+// │ terminada: no la cambies, ni la reemplaces ni la "simplifiques" sin  │
+// │ que el autor lo pida explícitamente. La de Plasma es otra, aparte    │
+// │ (lockscreen/org.elaren.lockscreen).                                  │
+// │ Archivos: modules/lock/ (LockSurface.qml, SessionLockScreen.qml,     │
+// │ qmldir) y services/SessionLock.qml.                                  │
+// └──────────────────────────────────────────────────────────────────────┘
+
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.Pam
+import "../../config"
+import "../../theme"
 import "../../services"
 import "."
 
@@ -28,6 +39,51 @@ Scope {
     // las siguientes se muestra la pregunta y se espera otra entrada.
     property bool passwordSent: false
     property bool awaitingResponse: false
+
+    // Despierta (tarjetas visibles) o en reposo (solo reloj y disco).
+    // Compartido entre pantallas, como la contraseña: tocar una despierta todas.
+    property bool awake: false
+    // Música en la pantalla: la opción de Configuración y un reproductor.
+    readonly property bool showMedia: Config.lockscreenShowMedia && Media.available
+
+    function wake(): void {
+        awake = true;
+        idleTimer.restart();
+    }
+
+    function sleep(): void {
+        awake = false;
+        idleTimer.stop();
+        SessionLock.password = "";
+    }
+
+    // A los 10 s sin actividad (y sin nada escrito) vuelve al reposo. Si en
+    // ese momento hay texto o PAM está verificando, se vuelve a esperar:
+    // si no, la pantalla quedaba despierta (y cava andando) para siempre.
+    Timer {
+        id: idleTimer
+        interval: 10000
+        onTriggered: {
+            if (SessionLock.password === "" && !root.authenticating && !root.awaitingResponse) root.awake = false;
+            else restart();
+        }
+    }
+
+    // Al dormirse, el anillo se desvanece con la animación lenta: cava sigue
+    // ese rato para que las barras no caigan de golpe durante el fundido.
+    Timer {
+        id: spectrumFade
+        interval: Theme.userAnim.slow
+    }
+    onAwakeChanged: if (!awake) spectrumFade.restart()
+
+    // El espectro (cava) corre solo con la pantalla despierta y música
+    // sonando: en reposo el bloqueo no gasta en audio.
+    Binding {
+        target: Visualizer
+        property: "lockActive"
+        value: SessionLock.locked && (root.awake || spectrumFade.running) && root.showMedia && Media.playing
+    }
 
     function submit(): void {
         if (awaitingResponse) {
@@ -99,6 +155,7 @@ Scope {
                 return;
             }
             SessionLock.password = "";
+            if (root.awake) idleTimer.restart();
             root.messageIsError = true;
             root.message = result === PamResult.MaxTries ? "Demasiados intentos. Esperá un momento."
                 : result === PamResult.Failed ? "Contraseña incorrecta"
@@ -108,6 +165,7 @@ Scope {
         onError: error => {
             root.awaitingResponse = false;
             SessionLock.password = "";
+            if (root.awake) idleTimer.restart();
             root.messageIsError = true;
             root.message = "No se pudo verificar la contraseña";
             console.warn("sessionlock: error de PAM", PamError.toString(error));
@@ -120,6 +178,7 @@ Scope {
             // Asignación explícita: si el compositor soltó el bloqueo, la
             // vinculación de arriba ya no alcanza para volver a pedirlo.
             lock.locked = SessionLock.locked;
+            root.awake = false;
             if (SessionLock.locked) {
                 root.message = "";
                 if (!lock.secure) confirmTimeout.restart();

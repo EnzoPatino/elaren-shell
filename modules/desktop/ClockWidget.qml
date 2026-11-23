@@ -52,26 +52,6 @@ DesktopWidget {
         return { prefix: hour === 1 ? "Es la" : "Son las", middle, period };
     }
 
-    // Aguja: un Item del tamaño del dial que gira sobre su centro.
-    component Hand: Item {
-        property real angle: 0
-        property real length: 60
-        property real thickness: 4
-        property color handColor: Theme.text
-
-        anchors.fill: parent
-        rotation: angle
-
-        Rectangle {
-            x: parent.width / 2 - width / 2
-            y: parent.height / 2 - parent.length
-            width: parent.thickness
-            height: parent.length + 12
-            radius: width / 2
-            color: parent.handColor
-        }
-    }
-
     Loader {
         sourceComponent: root.style === "analog" ? analog : root.style === "words" ? wordsView : digital
     }
@@ -124,89 +104,17 @@ DesktopWidget {
         id: analog
 
         Item {
-            id: face
-
             readonly property real size: 210
-            // Ángulos acumulados: el segundero no "rebobina" al pasar de 59 a 0.
-            property real secondAngle: 0
-            property int lastSecond: -1
 
             implicitWidth: size
             implicitHeight: size + 34
 
-            function update(): void {
-                const s = root.now.getSeconds();
-                if (lastSecond < 0) secondAngle = s * 6;
-                else secondAngle += ((s - lastSecond + 60) % 60) * 6;
-                lastSecond = s;
-            }
-            Component.onCompleted: update()
-            Connections {
-                target: root
-                function onNowChanged() { face.update(); }
-            }
-
-            Rectangle {
+            AnalogClock {
                 id: dial
-                width: face.size
-                height: face.size
-                radius: width / 2
-                color: Qt.alpha(Theme.surface, root.card ? 0.4 : 0.55)
-                border.width: 2
-                border.color: Qt.alpha(Theme.primary, 0.35)
-
-                // Marcas de las horas
-                Repeater {
-                    model: 12
-
-                    Item {
-                        required property int index
-                        anchors.fill: parent
-                        rotation: index * 30
-
-                        Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            y: 10
-                            width: parent.index % 3 === 0 ? 4 : 2
-                            height: parent.index % 3 === 0 ? 16 : 9
-                            radius: 2
-                            color: parent.index % 3 === 0 ? Theme.primary : Qt.alpha(Theme.text, 0.5)
-                        }
-                    }
-                }
-
-                Hand {
-                    thickness: 7
-                    length: face.size * 0.26
-                    handColor: Theme.text
-                    angle: (root.now.getHours() % 12) * 30 + root.now.getMinutes() * 0.5
-                }
-                Hand {
-                    thickness: 5
-                    length: face.size * 0.37
-                    handColor: Theme.text
-                    angle: root.now.getMinutes() * 6 + root.now.getSeconds() * 0.1
-                }
-                Hand {
-                    id: secondHand
-                    thickness: 2
-                    length: face.size * 0.41
-                    handColor: Theme.primary
-                    angle: face.secondAngle
-
-                    // Tic de cuarzo: pequeño rebote al avanzar
-                    Behavior on angle { NumberAnimation { duration: 220 * Theme.anim.scale; easing.type: Easing.OutBack; easing.overshoot: 2.5 } }
-                }
-
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: 12
-                    height: 12
-                    radius: 6
-                    color: Theme.primary
-                    border.width: 2
-                    border.color: Theme.surface
-                }
+                width: parent.size
+                height: parent.size
+                now: root.now
+                faceColor: Qt.alpha(Theme.surface, root.card ? 0.4 : 0.55)
             }
 
             StyledText {
