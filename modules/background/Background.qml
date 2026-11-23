@@ -1,4 +1,14 @@
+// ┌─ NO TOCAR ───────────────────────────────────────────────────────────┐
+// │ Gestor de fondos del entorno Hyprland: Elaren dibuja el fondo y la   │
+// │ pestaña Fondos de la isla lo cambia. Funciona y está terminado: no   │
+// │ lo cambies, ni lo reemplaces ni lo "simplifiques" sin que el autor   │
+// │ lo pida explícitamente.                                              │
+// │ Archivos: services/Wallpaper.qml, modules/background/Background.qml  │
+// │ y modules/bar/WallpaperView.qml.                                     │
+// └──────────────────────────────────────────────────────────────────────┘
+
 import QtQuick
+import QtQuick.Window
 import Quickshell
 import Quickshell.Wayland
 import "../../theme"
@@ -41,16 +51,51 @@ PanelWindow {
         // Dos capas para el fundido: `front` es la visible, `back` carga la nueva.
         property Image front: imageA
         property Image back: imageB
+        // Fuente de cada capa tal como la dio Wallpaper (Image.source
+        // normaliza la URL y no sirve para comparar).
+        property string shown: ""
+        property string loading: ""
+
+        // Decodificar al tamaño en pantalla (con el margen del paralaje), en
+        // píxeles físicos: un 8K original pesaría ~130 MB por capa.
+        readonly property size decodeSize: width > 0 && height > 0
+            ? Qt.size(Math.ceil(width * Screen.devicePixelRatio), Math.ceil(height * Screen.devicePixelRatio))
+            : Qt.size(1, 1)
 
         function show(source: string): void {
-            if (!source || source === front.source.toString()) return;
+            if (!source || source === (loading || shown)) return;
+            // Cambio durante el fundido: terminarlo ya, así `back` queda libre.
+            if (crossfade.running) {
+                crossfade.stop();
+                finishCrossfade();
+            }
+            if (source === shown) {
+                // Se volvió al fondo visible antes de que cargara el otro.
+                loading = "";
+                back.source = "";
+                return;
+            }
+            loading = source;
+            back.opacity = 0;
             back.source = source;
         }
 
         function onBackReady(): void {
+            shown = loading;
+            loading = "";
             back.z = 1;
             front.z = 0;
             crossfade.restart();
+        }
+
+        function finishCrossfade(): void {
+            const old = front;
+            back.opacity = 1;
+            back.scale = 1;
+            front = back;
+            back = old;
+            old.opacity = 0;
+            old.source = "";
         }
 
         Image {
@@ -59,8 +104,16 @@ PanelWindow {
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             cache: false
+            sourceSize: stage.decodeSize
             opacity: 0
-            onStatusChanged: if (status === Image.Ready && stage.back === imageA) stage.onBackReady()
+            onStatusChanged: {
+                if (stage.back !== imageA || stage.loading === "") return;
+                if (status === Image.Ready) stage.onBackReady();
+                else if (status === Image.Error) {
+                    console.warn("wallpaper: no se pudo cargar", stage.loading);
+                    stage.loading = "";
+                }
+            }
         }
 
         Image {
@@ -69,8 +122,16 @@ PanelWindow {
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             cache: false
+            sourceSize: stage.decodeSize
             opacity: 0
-            onStatusChanged: if (status === Image.Ready && stage.back === imageB) stage.onBackReady()
+            onStatusChanged: {
+                if (stage.back !== imageB || stage.loading === "") return;
+                if (status === Image.Ready) stage.onBackReady();
+                else if (status === Image.Error) {
+                    console.warn("wallpaper: no se pudo cargar", stage.loading);
+                    stage.loading = "";
+                }
+            }
         }
 
         SequentialAnimation {
@@ -79,15 +140,7 @@ PanelWindow {
                 Anim { target: stage.back; property: "opacity"; from: 0; to: 1; duration: Theme.anim.extraSlow * 1.5 }
                 Anim { target: stage.back; property: "scale"; from: 1.06; to: 1; duration: Theme.anim.extraSlow * 2; easing.bezierCurve: Theme.anim.emphasizedDecel }
             }
-            ScriptAction {
-                script: {
-                    const old = stage.front;
-                    stage.front = stage.back;
-                    stage.back = old;
-                    old.opacity = 0;
-                    old.source = "";
-                }
-            }
+            ScriptAction { script: stage.finishCrossfade() }
         }
 
         Connections {

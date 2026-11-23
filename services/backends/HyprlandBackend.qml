@@ -37,6 +37,7 @@ Scope {
     }
 
     readonly property string currentDesktop: String(Hyprland.focusedWorkspace?.id ?? "")
+    readonly property string focusedScreen: Hyprland.focusedMonitor?.name ?? ""
     readonly property string activeWindow: Hyprland.activeToplevel?.address ?? ""
 
     // Sin el título: cambia muy seguido y va aparte en `captions`, igual que

@@ -44,7 +44,7 @@ PanelWindow {
         { id: "bar", group: "Escritorio", name: "Barra superior", icon: "toolbar", description: "Ubicación, módulos, avatar e isla central" },
         { id: "dock", group: "Escritorio", name: "Dock", icon: "space_dashboard", description: "Comportamiento y tamaño de los iconos" },
         { id: "widgets", group: "Escritorio", name: "Widgets", icon: "widgets", description: "Reloj, saludo, música, sistema y clima en el escritorio" },
-        { id: "visualizer", group: "Escritorio", name: "Visualizador", icon: "graphic_eq", description: "Barras y ondas sobre el fondo mientras suena música" },
+        { id: "visualizer", group: "Escritorio", name: "Visualizador", icon: "graphic_eq", description: "El espectro del audio sobre el fondo mientras suena música" },
         { id: "lockscreen", group: "Sistema", name: "Bloqueo", icon: "lock", description: "Pantalla de bloqueo de Elaren" },
         { id: "gaming", group: "Sistema", name: "Modo gaming", icon: "sports_esports", description: "Qué se apaga mientras jugás y cuándo se activa" },
         { id: "about", group: "Sistema", name: "Acerca de", icon: "info", description: "Archivo de configuración y restablecer" }
@@ -113,6 +113,8 @@ PanelWindow {
     readonly property list<real> previewValues: !previewing ? [] : liveAudio ? Visualizer.display : demo
     readonly property list<real> previewCaps: !previewing ? [] : liveAudio ? Visualizer.caps : demoCaps
     readonly property color previewColor: Config.visualizerColor === "cover" && Media.available ? Media.accent : Theme.primary
+    // Para lo que se mueve solo (la seda ondula).
+    readonly property real previewTime: liveAudio ? Visualizer.clock : demoClock
 
     // Fondo oscurecido; clic fuera cierra.
     Rectangle {
@@ -446,12 +448,13 @@ PanelWindow {
                     anchors.bottomMargin: 8
                     values: root.previewValues
                     caps: root.previewCaps
-                    style: Config.visualizerStyle
+                    style: Visualizer.style
                     colorMode: Config.visualizerColor
                     color: root.previewColor
                     maxHeight: height * Math.min(1, Config.visualizerHeight / 260)
                     barWidth: Config.visualizerBarWidth
                     showCaps: Config.visualizerCaps
+                    time: root.previewTime
                     opacity: Config.visualizerOpacity
                 }
 
@@ -525,18 +528,18 @@ PanelWindow {
 
                     Repeater {
                         model: [
-                            { id: "bars", name: "Barras", hint: "Estilo cava" },
-                            { id: "blocks", name: "Bloques", hint: "Vúmetro LED" },
                             { id: "wave", name: "Onda", hint: "Rellena" },
                             { id: "mirror", name: "Espejo", hint: "Onda doble" },
-                            { id: "line", name: "Línea", hint: "Minimalista" }
+                            { id: "silk", name: "Seda", hint: "Cintas que se cruzan" },
+                            { id: "stems", name: "Tallos", hint: "Líneas con punto" },
+                            { id: "pills", name: "Píldoras", hint: "Desde el centro" }
                         ]
 
                         Rectangle {
                             id: styleCard
 
                             required property var modelData
-                            readonly property bool selected: Config.visualizerStyle === modelData.id
+                            readonly property bool selected: Visualizer.style === modelData.id
 
                             width: styleGrid.cardWidth
                             height: 118
@@ -562,6 +565,7 @@ PanelWindow {
                                 color: root.previewColor
                                 barWidth: Config.visualizerBarWidth
                                 showCaps: Config.visualizerCaps
+                                time: root.previewTime
                                 lineWidth: 2
                             }
 
@@ -624,7 +628,7 @@ PanelWindow {
                 ChoiceRow {
                     icon: "colorize"
                     title: "Color"
-                    description: "De dónde sale el color de las barras"
+                    description: "De dónde sale el color del espectro"
                     current: Config.visualizerColor
                     options: [
                         { value: "cover", label: "Portada", icon: "album" },
@@ -635,14 +639,17 @@ PanelWindow {
                 }
                 SwitchRow {
                     icon: "vertical_align_top"
+                    // Solo los tallos tienen tapitas: el punto queda arriba y cae despacio.
+                    visible: Visualizer.style === "stems"
                     title: "Tapitas"
-                    description: "Marcas que caen despacio sobre cada barra"
+                    description: "El punto de cada tallo queda arriba y cae despacio"
                     checked: Config.visualizerCaps
                     onToggled: value => Config.visualizerCaps = value
                 }
                 SliderRow {
                     icon: "view_week"
-                    title: "Cantidad de barras"
+                    title: "Detalle"
+                    description: "Cuántas frecuencias se dibujan"
                     value: Config.visualizerBars
                     from: 16
                     to: 96
@@ -652,7 +659,8 @@ PanelWindow {
                 }
                 SliderRow {
                     icon: "width"
-                    title: "Grosor de las barras"
+                    visible: Visualizer.style === "pills"
+                    title: "Grosor de las píldoras"
                     value: Config.visualizerBarWidth
                     from: 0.2
                     to: 0.95
@@ -669,7 +677,7 @@ PanelWindow {
                 SliderRow {
                     icon: "height"
                     title: "Altura"
-                    description: "Hasta dónde llegan las barras más altas"
+                    description: "Hasta dónde llega el espectro"
                     value: Config.visualizerHeight
                     from: 80
                     to: 480
@@ -1303,6 +1311,13 @@ PanelWindow {
                     checked: Config.barTabCalendar
                     onToggled: value => Config.barTabCalendar = value
                 }
+                SwitchRow {
+                    icon: "wallpaper"
+                    title: "Fondos"
+                    description: "Atajo: qs ipc … call bar toggle wallpaper"
+                    checked: Config.barTabWallpaper
+                    onToggled: value => Config.barTabWallpaper = value
+                }
             }
 
             ResetButton { section: "bar|hyprlandWorkspaces" }
@@ -1388,6 +1403,14 @@ PanelWindow {
                     stepSize: 4
                     display: v => Math.round(v) + " px"
                     onMoved: value => Config.wallpaperParallax = Math.round(value)
+                }
+                TextFieldRow {
+                    icon: "folder"
+                    title: "Carpeta de fondos"
+                    description: "La que muestra la pestaña Fondos de la isla"
+                    text: Config.wallpaperDir
+                    placeholder: Wallpaper.picturesDir + "/Wallpapers"
+                    onCommitted: value => Config.wallpaperDir = value.trim().replace(/^~(?=\/|$)/, Quickshell.env("HOME"))
                 }
             }
 

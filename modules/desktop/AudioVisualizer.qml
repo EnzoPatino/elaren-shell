@@ -221,6 +221,7 @@ PanelWindow {
                 maxHeight: root.maxHeight
                 barWidth: Config.visualizerBarWidth
                 showCaps: Config.visualizerCaps
+                time: Visualizer.clock
             }
         }
 

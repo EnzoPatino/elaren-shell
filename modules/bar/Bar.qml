@@ -88,9 +88,44 @@ PanelWindow {
         opennessAnim.easing.bezierCurve = islandOpen ? Theme.anim.expressive : Theme.anim.emphasizedAccel;
         opennessAnim.duration = islandOpen ? Theme.anim.slow : Theme.anim.normal;
         openness = islandOpen ? 1 : 0;
-        if (islandOpen) islandBox.forceActiveFocus();
+        if (islandOpen) {
+            islandBox.forceActiveFocus();
+            // Reabierta mientras se cerraba: la vista sigue cargada y no
+            // vuelve a pedir el foco sola. Después de este ciclo: el binding
+            // `focus` de islandBox se evalúa luego y se lo volvería a quitar.
+            Qt.callLater(island.focusView);
+        }
     }
     Behavior on openness { Anim { id: opennessAnim } }
+
+    // Atajo de teclado (`qs ipc … call bar toggle wallpaper`): solo responde
+    // la barra de la pantalla enfocada. Si el compositor no la informa, la
+    // primera pantalla.
+    Connections {
+        target: BarControl
+        function onOpenRequested(tab: string, toggle: bool): void {
+            const focused = Compositor.focusedScreen || (Quickshell.screens[0]?.name ?? "");
+            // La isla de otra pantalla se cierra: si no, conserva el teclado
+            // exclusivo y las teclas no llegan a la que se abre.
+            if (root.screen?.name !== focused) {
+                root.islandOpen = false;
+                return;
+            }
+            // Solo pestañas que existen y están encendidas en Configuración.
+            if (!island.tabs.some(t => t.id === tab)) {
+                console.warn("bar: pestaña no disponible:", tab);
+                return;
+            }
+            if (toggle) root.toggleIsland(tab);
+            else {
+                island.tab = tab;
+                root.islandOpen = true;
+            }
+        }
+        function onCloseRequested(): void {
+            root.islandOpen = false;
+        }
+    }
 
     // Durante una captura de pantalla la isla se cierra.
     Connections {

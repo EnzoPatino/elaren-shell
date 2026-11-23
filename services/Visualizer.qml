@@ -21,15 +21,18 @@ Singleton {
     // (no con un contador: las recargas en caliente destruyen las vistas
     // viejas después de crear el servicio nuevo y desarmaban la cuenta).
     property bool popupActive: false
+    // Pantalla de bloqueo de Hyprland: despierta y con música sonando.
+    property bool lockActive: false
     // El visualizador de escritorio solo se muestra con música sonando (o
     // mientras se lo acomoda con el ratón, con un espectro de demostración).
-    readonly property bool desktopActive: Config.visualizerEnabled && (Media.playing || placing)
+    // Con la sesión bloqueada el escritorio no se ve: no lo cuenta.
+    readonly property bool desktopActive: Config.visualizerEnabled && !SessionLock.locked && (Media.playing || placing)
 
     // Modo "acomodar": el visualizador se puede arrastrar, estirar y girar.
     property bool placing: false
     // Sin música, durante el modo acomodar se muestra una animación de demo.
     readonly property bool demo: placing && !Media.playing
-    readonly property bool users: popupActive || desktopActive
+    readonly property bool users: popupActive || desktopActive || lockActive
 
     // ── Espectro para cualquier vista ─────────────────────────────────────
     // Barras reales de cava; sin cava, barras sintetizadas a partir del nivel
@@ -42,8 +45,9 @@ Singleton {
 
     // Estilo del visualizador de escritorio (ver SpectrumView).
     // Se puede cambiar en caliente: qs ipc -p <ruta>/shell.qml call visualizer cycle
-    readonly property list<string> styles: ["bars", "blocks", "wave", "mirror", "line"]
-    readonly property string style: styles.includes(Config.visualizerStyle) ? Config.visualizerStyle : "bars"
+    readonly property list<string> styles: ["wave", "mirror", "silk", "stems", "pills"]
+    // Un estilo que ya no existe (barras, bloques, línea) pasa a la onda.
+    readonly property string style: styles.includes(Config.visualizerStyle) ? Config.visualizerStyle : "wave"
 
     IpcHandler {
         target: "visualizer"

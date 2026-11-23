@@ -242,6 +242,7 @@ bindel = , XF86AudioLowerVolume, exec, $elaren volume down
 bindl  = , XF86AudioMute, exec, $elaren volume mute
 bindel = , XF86MonBrightnessUp, exec, $elaren brightness up
 bindel = , XF86MonBrightnessDown, exec, $elaren brightness down
+bind   = SUPER, W, exec, $elaren bar toggle wallpaper   # isla en la pestaña Fondos
 ```
 
 Antes de agregar, revisá lo que ya hay:
@@ -252,6 +253,10 @@ grep -rn "source" ~/.config/hypr/hyprland.conf    # la config puede estar repart
 ```
 
 - Si ya hay un bloque `misc { … }`, agregá la línea adentro de ese bloque.
+- Con la configuración en Lua (`hyprland.lua`), el atajo de Fondos es
+  `create_bind("SUPER + W", hl.dsp.exec_cmd("qs ipc -p <ruta>/shell.qml call bar toggle wallpaper"))`.
+  `bar open|toggle <pestaña>` sirve para cualquier pestaña de la isla
+  (home, music, system, tray, calendar, wallpaper); `bar close` la cierra.
 - Si ya hay `bind` para esas teclas (con `wpctl` o `brightnessctl`),
   comentalos: si no, cada tecla actúa dos veces.
 - Si hay `exec-once` de otra barra (waybar, eww, otra shell de Quickshell),

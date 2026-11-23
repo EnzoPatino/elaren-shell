@@ -327,11 +327,12 @@ guarda; se pueden bloquear, escalar y mostrar con o sin tarjeta de vidrio.
 
 ### Visualizador
 
-Mientras suena música aparecen sobre el fondo, sin capturar clics, barras o
-una onda con el color de la portada. Estilos `bars`, `blocks`, `wave`,
-`mirror` y `line`; color de la portada, del tema o arcoíris; altura,
-opacidad, cantidad, grosor, sensibilidad y tapitas en Configuración →
-Visualizador.
+Mientras suena música aparece sobre el fondo, sin capturar clics, el
+espectro del audio con el color de la portada. Estilos `wave` (onda),
+`mirror` (espejo), `silk` (seda: cintas que se cruzan), `stems` (tallos:
+líneas finas con un punto) y `pills` (píldoras desde el centro); color de la
+portada, del tema o arcoíris; altura, opacidad, detalle, sensibilidad, grosor
+de las píldoras y tapitas de los tallos en Configuración → Visualizador.
 
 Va en cualquier lugar de la pantalla y puede crecer hacia cualquier lado. Con
 **Mover** (o `call visualizer place`) se acomoda con el ratón: arrastrar para

@@ -1,3 +1,12 @@
+// ┌─ NO TOCAR ───────────────────────────────────────────────────────────┐
+// │ Gestor de fondos del entorno Hyprland: Elaren dibuja el fondo y la   │
+// │ pestaña Fondos de la isla lo cambia. Funciona y está terminado: no   │
+// │ lo cambies, ni lo reemplaces ni lo "simplifiques" sin que el autor   │
+// │ lo pida explícitamente.                                              │
+// │ Archivos: services/Wallpaper.qml, modules/background/Background.qml  │
+// │ y modules/bar/WallpaperView.qml.                                     │
+// └──────────────────────────────────────────────────────────────────────┘
+
 pragma Singleton
 import QtQuick
 import Quickshell
@@ -12,8 +21,10 @@ Singleton {
 
     // Ruta tal como figura en la configuración (archivo o paquete de wallpaper).
     property string configured: ""
-    // Ruta final a una imagen, lista para usar en un Image.
+    // Ruta final a una imagen, lista para usar en un Image (URL codificada).
     property string source: ""
+    // La misma imagen como ruta común (sin file://), para comparar rutas.
+    property string currentPath: ""
 
     // skwd-wall dibuja el fondo por su cuenta (skwd-paper, con videos y escenas
     // de Wallpaper Engine); en ese caso Elaren no debe taparlo.
@@ -94,22 +105,124 @@ Singleton {
         }
     }
 
+    // Ruta → URL file:// codificada: un `%`, `#` o `?` en el nombre no
+    // rompe la URL ni se confunde con un escape.
+    function toUrl(path: string): string {
+        if (!path.startsWith("/")) return path;
+        return "file://" + encodeURI(path).replace(/#/g, "%23").replace(/\?/g, "%3F");
+    }
+
+    function setImage(path: string): void {
+        currentPath = path.startsWith("file://") ? decodeURIComponent(path.slice(7)) : path;
+        source = toUrl(currentPath);
+    }
+
+    // Paquete que se está resolviendo (o "" si ninguno).
+    property string wantedPackage: ""
+
     function resolve(): void {
         const path = Config.wallpaper || configured;
         if (!path) {
+            wantedPackage = "";
+            currentPath = "";
             source = "";
         } else if (imageExt.test(path)) {
-            source = path.startsWith("/") ? `file://${path}` : path;
+            // Un paquete que termine de resolverse después ya no manda.
+            wantedPackage = "";
+            setImage(path);
         } else {
             // Paquete de wallpaper (carpeta con contents/images/): usar la imagen más grande.
-            packageResolver.command = ["sh", "-c",
-                'ls -1 "$1"/contents/images/* 2>/dev/null | sort -V | tail -n 1', "sh", path.replace(/\/$/, "")];
-            packageResolver.running = true;
+            wantedPackage = path.replace(/\/$/, "");
+            if (!packageResolver.running) startPackage();
+            // Si ya corría, onExited lanza el pedido nuevo.
         }
+    }
+
+    function startPackage(): void {
+        packageResolver.requested = wantedPackage;
+        packageResolver.command = ["sh", "-c",
+            'ls -1 "$1"/contents/images/* 2>/dev/null | sort -V | tail -n 1', "sh", wantedPackage];
+        packageResolver.running = true;
     }
 
     onConfiguredChanged: resolve()
     Component.onCompleted: resolve()
+
+    // Elegir un fondo (Configuración o la pestaña Fondos) cambia Config.wallpaper.
+    Connections {
+        target: Config
+        function onWallpaperChanged(): void { root.resolve(); }
+    }
+
+    // ── Elegir fondo (pestaña Fondos de la isla) ─────────────────────────
+    // Carpeta con las imágenes para elegir: la de Configuración → Fondo o,
+    // si está vacía, <Imágenes>/Wallpapers (xdg-user-dir, así vale igual con
+    // la carpeta en español o en inglés).
+    property string picturesDir: `${Quickshell.env("HOME")}/Pictures`
+    readonly property string folder: (Config.wallpaperDir || `${picturesDir}/Wallpapers`).replace(/\/$/, "")
+
+    Process {
+        running: true
+        command: ["xdg-user-dir", "PICTURES"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const dir = text.trim();
+                if (dir) root.picturesDir = dir;
+            }
+        }
+    }
+
+    // Fondo elegido que espera turno: hasta saber quién dibuja el fondo, o
+    // mientras el comando anterior (Plasma/skwd) sigue corriendo. Solo vale
+    // el último: con clics rápidos gana la imagen elegida al final.
+    property string pendingApply: ""
+
+    // Pone `path` de fondo con quien lo esté dibujando.
+    function apply(path: string): void {
+        if (!path) return;
+        if (!providerKnown || applier.running) {
+            pendingApply = path;
+            return;
+        }
+        pendingApply = "";
+        if (path === currentPath) return;
+
+        if (Config.wallpaperProvider === "skwd" || (Config.wallpaperProvider === "auto" && skwdStandalone)) {
+            applier.command = ["skwd", "wall", "apply", JSON.stringify({ path: path, type: "static" })];
+        } else if (Config.wallpaperProvider === "auto" && plasmaDesktop) {
+            applier.command = ["plasma-apply-wallpaperimage", path];
+        } else {
+            if (Quickshell.env("ELAREN_WALLPAPER"))
+                console.warn("wallpaper: ELAREN_WALLPAPER está definida y manda sobre el fondo elegido");
+            Config.wallpaperSetting = path;
+            return;
+        }
+        // Lo dibuja otro: un fondo elegido antes en Configuración taparía al
+        // nuevo en la marca de la grilla y en el bloqueo.
+        Config.wallpaperSetting = "";
+        applier.path = path;
+        console.info("wallpaper: aplicando", path, "con", applier.command[0]);
+        applier.running = true;
+    }
+
+    onProviderKnownChanged: if (providerKnown && pendingApply) apply(pendingApply)
+
+    Process {
+        id: applier
+
+        property string path: ""
+
+        onExited: code => {
+            if (code === 0) {
+                // skwd no escribe el appletsrc y Plasma tarda en hacerlo:
+                // se toma el fondo nuevo sin esperar a que el archivo cambie.
+                root.configured = path;
+            } else {
+                console.warn("wallpaper: no se pudo aplicar el fondo,", command[0], "terminó con", code);
+            }
+            if (root.pendingApply) root.apply(root.pendingApply);
+        }
+    }
 
     FileView {
         path: Config.wallpaper ? "" : root.plasmaConfig
@@ -147,11 +260,20 @@ Singleton {
 
     Process {
         id: packageResolver
+
+        property string requested: ""
+
         stdout: StdioCollector {
             onStreamFinished: {
                 const file = text.trim();
-                if (file) root.source = `file://${file}`;
+                // Si mientras tanto se eligió otro fondo, este resultado no vale.
+                if (file && packageResolver.requested === root.wantedPackage) root.setImage(file);
             }
         }
+        // Pedido nuevo llegado mientras corría: lanzarlo después de que se
+        // procese la salida del anterior (que se descarta por `requested`).
+        onExited: Qt.callLater(() => {
+            if (root.wantedPackage && requested !== root.wantedPackage && !running) root.startPackage();
+        })
     }
 }

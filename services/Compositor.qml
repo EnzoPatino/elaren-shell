@@ -30,6 +30,8 @@ Singleton {
     readonly property bool connected: backend?.connected ?? false
     readonly property list<var> desktops: backend?.desktops ?? []
     readonly property string currentDesktop: backend?.currentDesktop ?? ""
+    // Nombre de la pantalla enfocada ("" si el compositor no lo informa).
+    readonly property string focusedScreen: backend?.focusedScreen ?? ""
     readonly property string activeWindow: backend?.activeWindow ?? ""
     readonly property list<var> windows: backend?.windows ?? []
     // id de ventana → título actual (cambia mucho más seguido que `windows`)

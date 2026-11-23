@@ -14,7 +14,7 @@ Item {
     id: root
 
     property bool active: false
-    // "home" | "music" | "system" | "tray" | "calendar"
+    // "home" | "music" | "system" | "tray" | "calendar" | "wallpaper"
     property string tab: "home"
     // Ventana de la barra: los menús de la bandeja se abren sobre ella.
     property var barWindow
@@ -30,7 +30,8 @@ Item {
         { id: "music", label: "Música", icon: "album", on: Config.barTabMusic && Media.available },
         { id: "system", label: "Recursos", icon: "monitor_heart", on: Config.barTabSystem },
         { id: "tray", label: "Bandeja", icon: "apps", on: Config.barTabTray },
-        { id: "calendar", label: "Calendario", icon: "calendar_month", on: Config.barTabCalendar }
+        { id: "calendar", label: "Calendario", icon: "calendar_month", on: Config.barTabCalendar },
+        { id: "wallpaper", label: "Fondos", icon: "wallpaper", on: Config.barTabWallpaper }
     ].filter(t => t.on)
 
     readonly property bool mediaTab: tab === "music"
@@ -42,6 +43,11 @@ Item {
     }
     onTabsChanged: ensureTab()
     onTabChanged: ensureTab()
+
+    // Devuelve el teclado a la vista que lo usa (la grilla de Fondos).
+    function focusView(): void {
+        if (view.item && view.item.wantsFocus) view.item.forceActiveFocus();
+    }
 
     implicitWidth: Math.max(tabRow.implicitWidth + closeButton.width + Theme.spacing.normal, view.implicitWidth) + Theme.spacing.large * 2
     implicitHeight: Theme.spacing.large + tabRow.height + Theme.spacing.normal + view.implicitHeight + Theme.spacing.large
@@ -136,7 +142,7 @@ Item {
         x: (root.width - width) / 2
         y: tabRow.y + tabRow.height + Theme.spacing.normal
         active: root.active
-        sourceComponent: root.tab === "calendar" ? calendarView : root.tab === "system" ? systemView : root.tab === "tray" ? trayView : root.mediaTab ? musicView : homeView
+        sourceComponent: root.tab === "wallpaper" ? wallpaperView : root.tab === "calendar" ? calendarView : root.tab === "system" ? systemView : root.tab === "tray" ? trayView : root.mediaTab ? musicView : homeView
 
         // Cambio de vista: entra con un leve fundido.
         onLoaded: if (item) fadeIn.restart()
@@ -161,6 +167,13 @@ Item {
     Component {
         id: calendarView
         CalendarView {}
+    }
+
+    Component {
+        id: wallpaperView
+        WallpaperView {
+            onDismissed: root.closeRequested()
+        }
     }
 
     Component {

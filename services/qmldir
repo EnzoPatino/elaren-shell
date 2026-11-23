@@ -23,3 +23,4 @@ singleton LockScreen 1.0 LockScreen.qml
 singleton SessionLock 1.0 SessionLock.qml
 singleton Bluetooth 1.0 Bluetooth.qml
 singleton PowerProfile 1.0 PowerProfile.qml
+singleton BarControl 1.0 BarControl.qml

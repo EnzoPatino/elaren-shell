@@ -18,7 +18,7 @@ Singleton {
     // ── Visualizador de escritorio ────────────────────────────────────────
     // Barras/onda sobre el fondo (debajo de las ventanas) mientras suena música.
     property alias visualizerEnabled: store.visualizerEnabled
-    // "bars" | "blocks" | "wave" | "mirror" | "line"
+    // "wave" | "mirror" | "silk" | "stems" | "pills" (ver SpectrumView)
     property alias visualizerStyle: store.visualizerStyle
     property alias visualizerHeight: store.visualizerHeight
     property alias visualizerOpacity: store.visualizerOpacity
@@ -113,6 +113,7 @@ Singleton {
     property alias barTabSystem: store.barTabSystem
     property alias barTabTray: store.barTabTray
     property alias barTabCalendar: store.barTabCalendar
+    property alias barTabWallpaper: store.barTabWallpaper
 
     // ── Dock ──────────────────────────────────────────────────────────────
     property alias dockEnabled: store.dockEnabled
@@ -150,6 +151,8 @@ Singleton {
     property alias wallpaperSetting: store.wallpaper
     // Desplazamiento lateral del fondo al cambiar de escritorio (px por escritorio).
     property alias wallpaperParallax: store.wallpaperParallax
+    // Carpeta que muestra la pestaña Fondos de la isla. Vacío = <Imágenes>/Wallpapers.
+    property alias wallpaperDir: store.wallpaperDir
 
     // Vuelve una sección (o todo, con "") a sus valores por defecto.
     function reset(prefix: string): void {
@@ -160,7 +163,7 @@ Singleton {
 
     readonly property var defaults: ({
         visualizerEnabled: true,
-        visualizerStyle: "bars",
+        visualizerStyle: "wave",
         visualizerHeight: 220,
         visualizerOpacity: 0.75,
         visualizerBars: 48,
@@ -199,6 +202,7 @@ Singleton {
         barTabSystem: true,
         barTabTray: true,
         barTabCalendar: true,
+        barTabWallpaper: true,
         widgetsLocked: false,
         widgetScale: 1.0,
         widgetCards: true,
@@ -233,7 +237,8 @@ Singleton {
         lockscreenClockSeconds: false,
         wallpaperProvider: "auto",
         wallpaper: "",
-        wallpaperParallax: 24
+        wallpaperParallax: 24,
+        wallpaperDir: ""
     })
 
     Process {
@@ -257,7 +262,7 @@ Singleton {
             id: store
 
             property bool visualizerEnabled: true
-            property string visualizerStyle: "bars"
+            property string visualizerStyle: "wave"
             property int visualizerHeight: 220
             property real visualizerOpacity: 0.75
             property int visualizerBars: 48
@@ -298,6 +303,7 @@ Singleton {
             property bool barTabSystem: true
             property bool barTabTray: true
             property bool barTabCalendar: true
+            property bool barTabWallpaper: true
 
             property bool widgetsLocked: false
             property real widgetScale: 1.0
@@ -345,6 +351,7 @@ Singleton {
             property string wallpaperProvider: "auto"
             property string wallpaper: ""
             property int wallpaperParallax: 24
+            property string wallpaperDir: ""
         }
     }
 }
