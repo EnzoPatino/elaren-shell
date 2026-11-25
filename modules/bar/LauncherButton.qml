@@ -82,14 +82,15 @@ Rectangle {
             text: root.active ? "close" : "apps"
             color: Theme.textOnPrimary
             font.pixelSize: Theme.font.icon
-            rotation: root.active ? 90 : 0
+            rotation: (root.active ? 90 : 0) + Theme.bar.upright
 
             Behavior on rotation { Anim { duration: Theme.anim.slow; easing.bezierCurve: Theme.anim.expressive } }
         }
 
         Reveal {
             anchors.verticalCenter: parent.verticalCenter
-            shown: touch.containsMouse || root.active
+            // En los costados no hay lugar para el rótulo.
+            shown: (touch.containsMouse || root.active) && !Theme.bar.vertical
 
             StyledText {
                 text: "Apps"

@@ -31,6 +31,7 @@ Row {
         MaterialIcon {
             anchors.centerIn: parent
             text: Audio.icon
+            rotation: Theme.bar.upright
             color: Audio.muted ? Theme.error : Theme.text
         }
 
@@ -45,14 +46,18 @@ Row {
         shown: root.expanded
 
         PillSlider {
+            // En los costados, girado: sube hacia arriba.
+            rotation: Theme.bar.vertical ? 180 : 0
             value: Audio.volume
             dimmed: Audio.muted
             onMoved: value => Audio.setVolume(value)
         }
     }
 
+    // En los costados el porcentaje se ve en el deslizador.
     StyledText {
         anchors.verticalCenter: parent.verticalCenter
+        visible: !Theme.bar.vertical
         width: 32
         text: Math.round(Audio.volume * 100) + "%"
         color: Theme.textMuted

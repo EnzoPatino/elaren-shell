@@ -195,7 +195,9 @@ PanelWindow {
     }
     Behavior on slide { Anim { id: slideAnim } }
 
-    readonly property real contentLength: mainRow.implicitWidth + 2 * (Theme.spacing.small + 1)
+    // El contenido se arma a escala 1 y se agranda entero (Config.barScale).
+    readonly property real contentScale: Theme.bar.scale
+    readonly property real contentLength: (mainRow.implicitWidth + 2 * (Theme.spacing.small + 1)) * contentScale
 
     // Tamaño natural de la isla en el marco canónico (suavizado al cambiar
     // de pestaña).
@@ -205,7 +207,8 @@ PanelWindow {
     Behavior on islandAcross { Anim { duration: Theme.anim.normal; easing.bezierCurve: Theme.anim.emphasizedDecel } }
 
     readonly property real p: Math.max(0, openness)
-    readonly property real islandW: clock.width + (islandAlong - clock.width) * Math.min(1, p)
+    readonly property real clockWidth: clock.width * contentScale
+    readonly property real islandW: clockWidth + (islandAlong - clockWidth) * Math.min(1, p)
     readonly property real islandH: islandAcross * p
     readonly property real filletRadius: Math.min(Theme.radius.normal, islandH / 2)
 
@@ -220,11 +223,10 @@ PanelWindow {
     // Configuración → Barra elige qué queda en el medio: la barra entera
     // ("center") o el avatar con el reloj ("clock").
     readonly property bool clockCentered: Config.barAlignment === "clock"
-    readonly property real clockOffset: mainRow.x + clock.x + clock.width / 2
+    readonly property real clockOffset: (mainRow.x + clock.x + clock.width / 2) * contentScale
     readonly property real contentStart: !clockCentered ? (lengthExtent - contentLength) / 2
-        : edge === "left" ? lengthExtent / 2 - contentLength + clockOffset
         : lengthExtent / 2 - clockOffset
-    readonly property real clockCenter: edge === "left" ? contentStart + contentLength - clockOffset : contentStart + clockOffset
+    readonly property real clockCenter: contentStart + clockOffset
 
     // La isla nace del reloj, sin salirse de la pantalla.
     readonly property real islandMargin: barRadius + filletRadius + Theme.spacing.large
@@ -298,9 +300,8 @@ PanelWindow {
         const dy = Math.max(-1, Math.min(1, (pointer.point.position.y - (c.y + c.height / 2)) / 160));
         return Qt.point(dx, dy);
     }
-    // En la barra girada, el avatar mira en sus propias coordenadas.
-    readonly property point barLook: edge === "left" ? Qt.point(-avatarLook.y, avatarLook.x)
-        : edge === "right" ? Qt.point(avatarLook.y, -avatarLook.x) : avatarLook
+    // En los costados el avatar va contra-girado (derecho): mira igual que en pantalla.
+    readonly property point barLook: avatarLook
 
     // ── Vidrio ────────────────────────────────────────────────────────────
     Item {
@@ -349,9 +350,11 @@ PanelWindow {
             anchors.margins: 1
             radius: root.barRadius - 1
             opacity: 1 - Math.min(1, root.p)
+            // Brillo hacia el lado interior de la pantalla.
             gradient: Gradient {
-                GradientStop { position: 0.4; color: "transparent" }
-                GradientStop { position: 1; color: Theme.glassHighlight }
+                orientation: root.vertical ? Gradient.Horizontal : Gradient.Vertical
+                GradientStop { position: root.edge === "right" ? 0.6 : 0.4; color: "transparent" }
+                GradientStop { position: root.edge === "right" ? 0 : 1; color: Theme.glassHighlight }
             }
         }
 
@@ -360,8 +363,9 @@ PanelWindow {
             anchors.margins: 1
             radius: root.barRadius - 1
             opacity: Media.available ? 1 - Math.min(1, root.p) : 0
+            // Tono de la música a lo largo de la barra (de arriba abajo en los costados).
             gradient: Gradient {
-                orientation: Gradient.Horizontal
+                orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
                 GradientStop { position: 0; color: Qt.alpha(Media.accent, 0.19) }
                 GradientStop { position: 0.48; color: Qt.alpha(Media.accent, 0.035) }
                 GradientStop { position: 1; color: Qt.alpha(Theme.secondary, 0.12) }
@@ -379,9 +383,11 @@ PanelWindow {
 
             x: (root.vertical ? parent.width / 2 : along) - width / 2
             y: (root.vertical ? along : parent.height / 2) - height / 2
-            width: root.contentLength
-            height: root.thickness
-            rotation: root.edge === "left" ? -90 : root.edge === "right" ? 90 : 0
+            width: root.contentLength / root.contentScale
+            height: root.thickness / root.contentScale
+            scale: root.contentScale
+            // A los dos costados gira igual: el comienzo (lanzador) queda arriba.
+            rotation: root.vertical ? 90 : 0
 
             Row {
                 id: mainRow
@@ -419,7 +425,8 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         revealed: root.revealed && Config.barShowActiveWindow
                         revealDelay: 160
-                        maxWidth: Math.min(260, root.lengthExtent * 0.14)
+                        // En los costados, solo el ícono.
+                        maxWidth: root.vertical ? 0 : Math.min(260, root.lengthExtent * 0.14)
                     }
                 }
 

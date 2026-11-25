@@ -10,6 +10,7 @@ Item {
 
     implicitWidth: 24
     implicitHeight: 24
+    rotation: Theme.bar.upright
 
     MaterialIcon {
         id: cup

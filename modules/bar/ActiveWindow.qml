@@ -37,12 +37,14 @@ Reveal {
             height: 18
             sourceSize: Qt.size(36, 36)
             source: root.window ? Apps.icon(root.window.appId) : ""
+            rotation: Theme.bar.upright
             smooth: true
         }
 
         StyledText {
             id: title
             anchors.verticalCenter: parent.verticalCenter
+            visible: !Theme.bar.vertical
             width: Math.min(implicitWidth, root.maxWidth)
             elide: Text.ElideRight
             text: root.caption

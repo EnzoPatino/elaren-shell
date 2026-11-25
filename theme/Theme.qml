@@ -75,10 +75,18 @@ QtObject {
     }
     readonly property Spacings spacing: Spacings {}
 
+    // `height` ya incluye el tamaño elegido (Config.barScale). El contenido de
+    // la barra se arma a escala 1 con `itemHeight` y Bar.qml lo agranda entero,
+    // así íconos, texto y espacios crecen en proporción.
     component BarMetrics: QtObject {
-        readonly property int height: 44
+        readonly property real scale: Math.max(0.8, Math.min(1.6, Config.barScale || 1))
+        readonly property int height: Math.round(44 * scale)
         readonly property int margin: 6
         readonly property int itemHeight: 28
+        // Barra en un costado: la composición va girada 90° y cada ícono o
+        // texto se gira `upright` grados para quedar derecho.
+        readonly property bool vertical: Config.barPosition === "left" || Config.barPosition === "right"
+        readonly property real upright: vertical ? -90 : 0
     }
     readonly property BarMetrics bar: BarMetrics {}
 

@@ -376,10 +376,8 @@ aplican al instante y se guardan en `~/.config/elaren/settings.json`
 ### Animaciones
 
 La barra cae con rebote al arrancar; el indicador de escritorios se desplaza
-como un gusano y sus rótulos pueden ser números, romanos, kanji, puntos o
-**Pac-Man** (idea del estilo "Caelestia" de
-[neko-desktops](https://github.com/ezku100/neko-desktops), dibujado desde
-cero); el reloj rueda como un marcador mecánico; el dock tiene magnificación y
+como un gusano y su estilo puede ser números, píldoras, una órbita de anillos
+o los íconos de las apps abiertas en cada escritorio; el reloj rueda como un marcador mecánico; el dock tiene magnificación y
 rebote al abrir apps; los botones, onda desde el punto de clic.
 `ELAREN_ANIM_SCALE` cambia la velocidad (`0` las desactiva, `2` las hace el
 doble de lentas) y Configuración → Apariencia también.

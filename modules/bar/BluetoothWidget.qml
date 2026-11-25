@@ -19,6 +19,7 @@ Item {
         MaterialIcon {
             anchors.verticalCenter: parent.verticalCenter
             text: Bluetooth.icon
+            rotation: Theme.bar.upright
             color: Bluetooth.connected ? Theme.primary
                  : Bluetooth.enabled ? Theme.text
                  : Theme.textMuted
@@ -26,7 +27,7 @@ Item {
 
         Reveal {
             anchors.verticalCenter: parent.verticalCenter
-            shown: touch.containsMouse
+            shown: touch.containsMouse && !Theme.bar.vertical
 
             StyledText {
                 width: Math.min(implicitWidth, 140)

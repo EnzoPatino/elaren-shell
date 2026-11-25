@@ -85,8 +85,10 @@ Singleton {
     property alias barPosition: store.barPosition
     // Se esconde cuando no se usa; aparece al llevar el ratón al borde.
     property alias barAutoHide: store.barAutoHide
+    // Tamaño de la barra y su contenido (1 = el tamaño compacto original).
+    property alias barScale: store.barScale
     property alias barShowWorkspaces: store.barShowWorkspaces
-    // Cómo se rotulan los escritorios: "numbers" | "roman" | "kanji" | "dots"
+    // Cómo se ven los escritorios: "numbers" | "pills" | "orbit" | "apps"
     property alias barWorkspaceStyle: store.barWorkspaceStyle
     // Hyprland crea los espacios al usarlos: cuántos se muestran siempre.
     property alias hyprlandWorkspaces: store.hyprlandWorkspaces
@@ -156,6 +158,9 @@ Singleton {
     property alias wallpaperSetting: store.wallpaper
     // Desplazamiento lateral del fondo al cambiar de escritorio (px por escritorio).
     property alias wallpaperParallax: store.wallpaperParallax
+    // Transición entre fondos cuando los dibuja Elaren:
+    // "fade" | "zoom" | "slide" | "wipe" | "circle" | "random".
+    property alias wallpaperTransition: store.wallpaperTransition
     // Carpeta que muestra la pestaña Fondos de la isla. Vacío = <Imágenes>/Wallpapers.
     property alias wallpaperDir: store.wallpaperDir
 
@@ -186,6 +191,7 @@ Singleton {
         barShowWorkspaces: true,
         barPosition: "top",
         barAutoHide: false,
+        barScale: 1.15,
         barWorkspaceStyle: "numbers",
         hyprlandWorkspaces: 5,
         barShowActiveWindow: true,
@@ -245,6 +251,7 @@ Singleton {
         wallpaperProvider: "auto",
         wallpaper: "",
         wallpaperParallax: 24,
+        wallpaperTransition: "fade",
         wallpaperDir: ""
     })
 
@@ -289,6 +296,7 @@ Singleton {
             property bool barShowWorkspaces: true
             property string barPosition: "top"
             property bool barAutoHide: false
+            property real barScale: 1.15
             property string barWorkspaceStyle: "numbers"
             property int hyprlandWorkspaces: 5
             property bool barShowActiveWindow: true
@@ -360,6 +368,7 @@ Singleton {
             property string wallpaperProvider: "auto"
             property string wallpaper: ""
             property int wallpaperParallax: 24
+            property string wallpaperTransition: "fade"
             property string wallpaperDir: ""
         }
     }

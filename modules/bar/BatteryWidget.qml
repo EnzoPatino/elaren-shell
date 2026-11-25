@@ -17,7 +17,8 @@ Reveal {
             id: icon
             anchors.verticalCenter: parent.verticalCenter
             text: Battery.icon
-            rotation: 90
+            // Acostada en la barra; parada en los costados.
+            rotation: Theme.bar.vertical ? 0 : 90
             color: Battery.critical ? Theme.error
                  : Battery.low ? Theme.warning
                  : Battery.charging ? Theme.success
@@ -57,18 +58,21 @@ Reveal {
             }
         }
 
-        StyledText {
+        Upright {
             anchors.verticalCenter: parent.verticalCenter
-            text: Math.round(Battery.level * 100) + "%"
-            color: icon.color
-            font.pixelSize: Theme.font.small
-            font.features: { "tnum": 1 }
+
+            StyledText {
+                text: Math.round(Battery.level * 100) + (Theme.bar.vertical ? "" : "%")
+                color: icon.color
+                font.pixelSize: Theme.font.small
+                font.features: { "tnum": 1 }
+            }
         }
 
         // Tiempo restante, al pasar el ratón
         Reveal {
             anchors.verticalCenter: parent.verticalCenter
-            shown: hover.hovered && Battery.timeLeft > 0 && !Battery.full
+            shown: hover.hovered && Battery.timeLeft > 0 && !Battery.full && !Theme.bar.vertical
 
             StyledText {
                 leftPadding: 4

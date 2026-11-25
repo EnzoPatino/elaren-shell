@@ -31,13 +31,14 @@ BarGroup {
     MaterialIcon {
         anchors.verticalCenter: parent.verticalCenter
         text: "sports_esports"
+        rotation: Theme.bar.upright
         font.pixelSize: Theme.font.icon
         color: GameMode.active ? Theme.primary : Theme.textMuted
     }
 
     Reveal {
         anchors.verticalCenter: parent.verticalCenter
-        shown: GameMode.active
+        shown: GameMode.active && !Theme.bar.vertical
 
         StyledText {
             rightPadding: 2

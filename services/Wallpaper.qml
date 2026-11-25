@@ -12,6 +12,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "../config"
+import "../theme"
 
 // Imagen de fondo. Por defecto lee el wallpaper que tengas en Plasma
 // (y lo sigue si lo cambiás desde la configuración del escritorio).
@@ -22,8 +23,11 @@ Singleton {
     // Ruta tal como figura en la configuración (archivo o paquete de wallpaper).
     property string configured: ""
     // Ruta final a una imagen, lista para usar en un Image (URL codificada).
+    // Con un fondo animado es su cuadro fijo (para colores y bloqueo).
     property string source: ""
-    // La misma imagen como ruta común (sin file://), para comparar rutas.
+    // Fondo animado que dibuja Elaren (URL de un video) o "" si es una imagen.
+    property string video: ""
+    // El fondo puesto como ruta común (sin file://), para comparar rutas.
     property string currentPath: ""
 
     // skwd-wall dibuja el fondo por su cuenta (skwd-paper, con videos y escenas
@@ -48,6 +52,17 @@ Singleton {
     readonly property string plasmaConfig: `${Quickshell.env("HOME")}/.config/plasma-org.kde.plasma.desktop-appletsrc`
 
     readonly property var imageExt: /\.(jpe?g|png|webp|bmp|gif|avif|jxl|svg)$/i
+    readonly property var videoExt: /\.(mp4|webm|mkv|mov|m4v)$/i
+
+    // skwd-wall aplica los fondos elegidos: lo dibuja él (standalone) o su
+    // plugin de Plasma. Entonces también hay videos y escenas de Wallpaper Engine.
+    // El plugin de Plasma cuenta solo con plasmashell corriendo: en Hyprland el
+    // appletsrc sigue ahí, pero ese plugin no dibuja nada.
+    readonly property bool viaSkwd: Config.wallpaperProvider === "skwd"
+        || (Config.wallpaperProvider === "auto" && (skwdStandalone || (plasmaDesktop && plasmaUsesSkwd)))
+    // Quien dibuja puede mostrar videos: skwd-wall o Elaren.
+    readonly property bool animatedSupported: viaSkwd || drawsOwn
+    readonly property string helm: `${Quickshell.env("HOME")}/.local/bin/skwd-helm`
 
     // Imagen del plugin de skwd-wall (Assignments en JSON, una por salida).
     function skwdImage(json: string): string {
@@ -123,17 +138,37 @@ Singleton {
     function setImage(path: string): void {
         currentPath = path.startsWith("file://") ? decodeURIComponent(path.slice(7)) : path;
         source = toUrl(currentPath);
+        video = "";
+    }
+
+    // Fondo animado: el video (solo lo reproduce Elaren si dibuja el fondo) y
+    // un cuadro fijo para colores y bloqueo (la vista previa de skwd o la
+    // miniatura propia).
+    function setAnimated(path: string): void {
+        currentPath = path;
+        const entry = skwdIndex[path];
+        const own = thumbsReady[path] ? `${thumbDir}/${Qt.md5(path)}.jpg` : "";
+        const still = entry?.preview || entry?.thumb || own;
+        source = still ? toUrl(still) : "";
+        video = drawsOwn && videoExt.test(path) ? toUrl(path) : "";
+        if (!still && videoExt.test(path)) requestThumb(path);
     }
 
     // Paquete que se está resolviendo (o "" si ninguno).
     property string wantedPackage: ""
 
     function resolve(): void {
-        const path = Config.wallpaper || configured;
+        // skwd-wall sabe qué hay puesto de verdad (también videos y escenas,
+        // que no figuran como Image= en Plasma).
+        const path = Config.wallpaper || (viaSkwd ? skwdCurrent : "") || configured;
         if (!path) {
             wantedPackage = "";
             currentPath = "";
             source = "";
+            video = "";
+        } else if (videoExt.test(path) || (skwdIndex[path] && skwdIndex[path].kind !== "image")) {
+            wantedPackage = "";
+            setAnimated(path);
         } else if (imageExt.test(path)) {
             // Un paquete que termine de resolverse después ya no manda.
             wantedPackage = "";
@@ -154,6 +189,11 @@ Singleton {
     }
 
     onConfiguredChanged: resolve()
+    onSkwdCurrentChanged: resolve()
+    onViaSkwdChanged: {
+        resolve();
+        refreshSkwdIndex();
+    }
     Component.onCompleted: resolve()
 
     // Elegir un fondo (Configuración o la pestaña Fondos) cambia Config.wallpaper.
@@ -195,9 +235,15 @@ Singleton {
         pendingApply = "";
         if (path === currentPath) return;
 
-        if (Config.wallpaperProvider === "skwd" || (Config.wallpaperProvider === "auto" && skwdStandalone)) {
-            applier.command = ["skwd", "wall", "apply", JSON.stringify({ path: path, type: "static" })];
+        if (viaSkwd) {
+            // También con Plasma: su plugin de skwd-wall lo muestra. Con
+            // plasma-apply-wallpaperimage se cambiaría el plugin por el de imagen.
+            applier.command = [helm, "apply", path];
         } else if (Config.wallpaperProvider === "auto" && plasmaDesktop) {
+            if (!imageExt.test(path)) {
+                console.warn("wallpaper: Plasma solo muestra imágenes; para videos, que dibuje Elaren o skwd-wall");
+                return;
+            }
             applier.command = ["plasma-apply-wallpaperimage", path];
         } else {
             if (Quickshell.env("ELAREN_WALLPAPER"))
@@ -213,7 +259,10 @@ Singleton {
         applier.running = true;
     }
 
-    onProviderKnownChanged: if (providerKnown && pendingApply) apply(pendingApply)
+    onProviderKnownChanged: {
+        if (providerKnown && pendingApply) apply(pendingApply);
+        refreshSkwdIndex();
+    }
 
     Process {
         id: applier
@@ -224,7 +273,8 @@ Singleton {
             if (code === 0) {
                 // skwd no escribe el appletsrc y Plasma tarda en hacerlo:
                 // se toma el fondo nuevo sin esperar a que el archivo cambie.
-                root.configured = path;
+                if (root.viaSkwd) root.skwdCurrent = path;
+                else root.configured = path;
             } else {
                 console.warn("wallpaper: no se pudo aplicar el fondo,", command[0], "terminó con", code);
             }
@@ -284,4 +334,282 @@ Singleton {
             if (root.wantedPackage && requested !== root.wantedPackage && !running) root.startPackage();
         })
     }
+
+    // ── Lo que tiene puesto skwd-wall ────────────────────────────────────
+    property string skwdCurrent: ""
+
+    function refreshSkwdCurrent(): void {
+        if (viaSkwd && !skwdProbe.running) skwdProbe.running = true;
+    }
+
+    Process {
+        id: skwdProbe
+        command: [root.helm, "current", "--json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const outs = JSON.parse(text).outputs ?? [];
+                    const out = outs.find(o => o.connected) ?? outs[0];
+                    const path = out?.path || out?.current || "";
+                    if (path) root.skwdCurrent = path;
+                } catch (e) {}
+            }
+        }
+    }
+
+    // Eventos del daemon (cambio de fondo desde su selector, playlists…):
+    // cada línea pide releer el estado, agrupadas por el Timer.
+    Process {
+        running: root.viaSkwd
+        command: [root.helm, "watch"]
+        stdout: SplitParser {
+            onRead: {
+                skwdDebounce.restart();
+                skwdIndexDebounce.restart();
+            }
+        }
+        onRunningChanged: if (running) root.refreshSkwdCurrent()
+    }
+
+    Timer {
+        id: skwdDebounce
+        interval: 300
+        onTriggered: root.refreshSkwdCurrent()
+    }
+
+    // ── Miniaturas de skwd-wall ──────────────────────────────────────────
+    // ruta → { kind: "image" | "video" | "scene", thumb, preview }. Solo sirve
+    // para tomar sus miniaturas (también de videos) y sus escenas; las
+    // carpetas se recorren de verdad (ver browse). Se lee al arrancar y
+    // cuando el daemon avisa cambios, no cada vez que se abre la pestaña.
+    property var skwdIndex: ({})
+    readonly property string thumbDir: `${Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache"}/elaren/wallpaper-thumbs`
+    readonly property var skwdScenes: Object.keys(skwdIndex).filter(p => skwdIndex[p].kind === "scene")
+
+    function refreshSkwdIndex(): void {
+        if (viaSkwd && !skwdLister.running) skwdLister.running = true;
+    }
+
+    Timer {
+        id: skwdIndexDebounce
+        interval: 2000
+        onTriggered: root.refreshSkwdIndex()
+    }
+
+    Process {
+        id: skwdLister
+        command: [root.helm, "list", "--json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const index = {};
+                try {
+                    for (const w of JSON.parse(text).wallpapers ?? []) {
+                        const path = w.video_file || w.name || "";
+                        if (!path || w.hidden) continue;
+                        index[path] = {
+                            kind: w.type === "static" ? "image" : w.type === "video" ? "video" : "scene",
+                            thumb: w.thumb_sm || w.thumb || "",
+                            preview: w.preview || w.thumb || ""
+                        };
+                    }
+                } catch (e) {
+                    console.warn("wallpaper: no se pudo leer la biblioteca de skwd-wall");
+                }
+                root.skwdIndex = index;
+                root.resolve();
+            }
+        }
+    }
+
+    // ── Carpetas para la pestaña Fondos ──────────────────────────────────
+    // Se navega carpeta por carpeta: cada una muestra sus subcarpetas y sus
+    // propios fondos, sin mezclar lo de adentro. Raíces: la carpeta de
+    // Configuración → Fondo y, con skwd-wall, las de su biblioteca.
+    property list<string> skwdFolders: []
+    readonly property list<string> roots: {
+        const all = [folder];
+        for (const f of skwdFolders) if (!all.includes(f)) all.push(f);
+        return all;
+    }
+    // "" = la raíz (las carpetas raíz o, si hay una sola, esa misma).
+    property string browseDir: ""
+    // Entradas: { path, name, kind: "folder" | "image" | "video" | "scene", count, cover }
+    property var entries: []
+    property bool browsing: false
+    readonly property bool atRoot: browseDir === "" || (roots.length === 1 && browseDir === roots[0])
+
+    FileView {
+        path: root.viaSkwd ? `${Quickshell.env("HOME")}/.config/skwd-wall-v2/config.json` : ""
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                const home = Quickshell.env("HOME");
+                root.skwdFolders = (JSON.parse(text()).library?.folders ?? [])
+                    .map(f => f.replace(/^~(?=\/|$)/, home).replace(/\/$/, ""));
+            } catch (e) {
+                root.skwdFolders = [];
+            }
+        }
+    }
+
+    function kindOf(path: string): string {
+        if (imageExt.test(path)) return "image";
+        if (animatedSupported && videoExt.test(path)) return "video";
+        return "";
+    }
+
+    function baseName(path: string): string {
+        return path.replace(/\/$/, "").split("/").pop().replace(/\.[^.]+$/, "");
+    }
+
+    // Miniatura para la grilla: la de skwd si la tiene; si no, la imagen misma
+    // (la grilla la decodifica chica) o un cuadro del video generado acá.
+    function thumbFor(path: string): string {
+        const s = skwdIndex[path]?.thumb;
+        if (s) return s;
+        if (videoExt.test(path)) {
+            requestThumb(path);
+            return `${thumbDir}/${Qt.md5(path)}.jpg`;
+        }
+        return path;
+    }
+
+    function browse(dir: string): void {
+        if (dir === "" && roots.length === 1) dir = roots[0];
+        browseDir = dir;
+        if (dir === "") {
+            listRoots();
+            return;
+        }
+        if (dir === "@scenes") {
+            entries = skwdScenes.map(p => ({ path: p, name: baseName(p), kind: "scene", count: 0, cover: "" }))
+                .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+            return;
+        }
+        browsing = true;
+        lister.running = false;
+        lister.dir = dir;
+        // Un nivel de fondos y, de cada subcarpeta, sus fondos directos (para
+        // la cantidad y la tapa). Sin entrar más hondo ni a carpetas ocultas.
+        lister.command = ["find", "-L", dir, "-mindepth", "1", "-maxdepth", "2",
+            "-name", ".*", "-prune", "-o", "-printf", "%y\t%d\t%p\n"];
+        lister.running = true;
+    }
+
+    function up(): void {
+        if (atRoot) return;
+        if (browseDir === "@scenes" || roots.includes(browseDir)) {
+            browse("");
+            return;
+        }
+        browse(browseDir.slice(0, browseDir.lastIndexOf("/")));
+    }
+
+    // Las raíces como carpetas, con la cantidad y la tapa de sus fondos directos.
+    function listRoots(): void {
+        browsing = true;
+        lister.running = false;
+        lister.dir = "";
+        lister.command = ["find", "-L", ...roots, "-mindepth", "1", "-maxdepth", "1",
+            "-name", ".*", "-prune", "-o", "-type", "f", "-printf", "f\t2\t%p\n"];
+        lister.running = true;
+    }
+
+    Process {
+        id: lister
+
+        property string dir: ""
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                // Respuesta de una carpeta que ya no es la abierta: descartar.
+                if (lister.dir !== root.browseDir) return;
+                const folders = {};
+                const files = [];
+                if (lister.dir === "")
+                    for (const r of root.roots) folders[r] = { path: r, name: root.baseName(r), kind: "folder", count: 0, cover: "" };
+                for (const line of text.split("\n")) {
+                    const [type, depth, path] = line.split("\t");
+                    if (!path) continue;
+                    if (depth === "1") {
+                        if (type === "d") folders[path] = { path, name: root.baseName(path), kind: "folder", count: 0, cover: "" };
+                        else if (type === "f" && root.kindOf(path)) files.push({ path, name: root.baseName(path), kind: root.kindOf(path), count: 0, cover: "" });
+                    } else if (type === "f" && root.kindOf(path)) {
+                        const parent = folders[path.slice(0, path.lastIndexOf("/"))];
+                        if (!parent) continue;
+                        parent.count++;
+                        if (!parent.cover || path < parent.coverPath) {
+                            parent.coverPath = path;
+                            parent.cover = root.thumbFor(path);
+                        }
+                    }
+                }
+                const byName = (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true });
+                const list = lister.dir === "" ? Object.values(folders) : Object.values(folders).sort(byName);
+                if (lister.dir === "" && root.skwdScenes.length > 0)
+                    list.push({ path: "@scenes", name: "Escenas de Wallpaper Engine", kind: "folder",
+                        count: root.skwdScenes.length, cover: root.skwdIndex[root.skwdScenes[0]].thumb });
+                root.entries = list.concat(files.sort(byName));
+                root.browsing = false;
+            }
+        }
+    }
+
+    // Miniaturas de videos propios: un cuadro a 480 px con ffmpeg, una vez.
+    property var thumbQueue: []
+    property var thumbsDone: ({})
+    property var thumbsReady: ({})
+    // Cambia al terminar cada miniatura, para que las vistas recarguen.
+    property int thumbsVersion: 0
+
+    function requestThumb(path: string): void {
+        if (thumbsDone[path] || thumbQueue.includes(path)) return;
+        thumbQueue.push(path);
+        if (!thumbMaker.running) nextThumb();
+    }
+
+    function nextThumb(): void {
+        const path = thumbQueue.shift();
+        if (!path) return;
+        thumbsDone[path] = true;
+        thumbMaker.path = path;
+        thumbMaker.target = `${thumbDir}/${Qt.md5(path)}.jpg`;
+        thumbMaker.command = ["sh", "-c",
+            'mkdir -p "$(dirname "$2")" && { [ -s "$2" ] || ffmpeg -nostdin -loglevel error -ss 1 -i "$1" -frames:v 1 -vf scale=480:-2 -y "$2"; }',
+            "sh", path, thumbMaker.target];
+        thumbMaker.running = true;
+    }
+
+    Process {
+        id: thumbMaker
+        property string path: ""
+        property string target: ""
+        onExited: {
+            root.thumbsReady[path] = true;
+            root.thumbsVersion++;
+            if (path === root.currentPath && !root.source) root.resolve();
+            Qt.callLater(root.nextThumb);
+        }
+    }
+
+    // ── Rendimiento de los fondos animados ───────────────────────────────
+    // En modo gaming (o pantalla completa de un juego) se congelan: sin
+    // decodificar video ni componer cuadros nuevos detrás del juego.
+    readonly property bool animatedPaused: Theme.gaming
+    property bool skwdPausedByUs: false
+
+    onAnimatedPausedChanged: {
+        if (!viaSkwd) return;
+        if (animatedPaused) {
+            skwdPauser.command = [helm, "pause"];
+            skwdPausedByUs = true;
+        } else if (skwdPausedByUs) {
+            skwdPauser.command = [helm, "resume"];
+            skwdPausedByUs = false;
+        } else return;
+        skwdPauser.running = true;
+    }
+
+    Process { id: skwdPauser }
 }

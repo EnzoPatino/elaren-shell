@@ -33,7 +33,7 @@ Reveal {
             width: 24
             text: Brightness.icon
             color: Theme.warning
-            rotation: Brightness.value * 180
+            rotation: Brightness.value * 180 + Theme.bar.upright
 
             Behavior on rotation { Anim { duration: Theme.anim.slow; easing.bezierCurve: Theme.anim.expressive } }
         }
@@ -43,6 +43,8 @@ Reveal {
             shown: content.expanded
 
             PillSlider {
+                // En los costados, girado: sube hacia arriba.
+                rotation: Theme.bar.vertical ? 180 : 0
                 value: Brightness.value
                 accent: Theme.warning
                 onMoved: value => Brightness.setValue(value)
@@ -51,7 +53,7 @@ Reveal {
 
         Reveal {
             anchors.verticalCenter: parent.verticalCenter
-            shown: content.expanded
+            shown: content.expanded && !Theme.bar.vertical
 
             StyledText {
                 width: 32

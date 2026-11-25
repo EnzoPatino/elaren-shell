@@ -1065,6 +1065,17 @@ PanelWindow {
                     ]
                     onChosen: value => Config.barPosition = value
                 }
+                SliderRow {
+                    icon: "format_size"
+                    title: "Tamaño de la barra"
+                    description: "Agranda la barra con sus íconos y textos"
+                    value: Config.barScale
+                    from: 0.85
+                    to: 1.5
+                    stepSize: 0.05
+                    display: v => Math.round(v * 100) + "%"
+                    onMoved: value => Config.barScale = Math.round(value * 20) / 20
+                }
                 SwitchRow {
                     icon: "visibility_off"
                     title: "Ocultar sola"
@@ -1145,15 +1156,16 @@ PanelWindow {
                 ChoiceRow {
                     visible: Config.barShowWorkspaces
                     icon: "format_list_numbered"
-                    title: "Rótulos de escritorios"
+                    title: "Estilo de escritorios"
                     description: "Cómo se ve cada escritorio en la barra"
-                    current: Config.barWorkspaceStyle
+                    current: ["numbers", "pills", "orbit", "apps"].includes(Config.barWorkspaceStyle)
+                        ? Config.barWorkspaceStyle
+                        : ["dots", "pacman"].includes(Config.barWorkspaceStyle) ? "pills" : "numbers"
                     options: [
-                        { value: "numbers", label: "1 2 3" },
-                        { value: "roman", label: "I II III" },
-                        { value: "kanji", label: "一 二 三" },
-                        { value: "dots", label: "• • •" },
-                        { value: "pacman", label: "Pac-Man" }
+                        { value: "numbers", label: "Números", icon: "looks_one" },
+                        { value: "pills", label: "Píldoras", icon: "more_horiz" },
+                        { value: "orbit", label: "Órbita", icon: "commit" },
+                        { value: "apps", label: "Apps", icon: "apps" }
                     ]
                     onChosen: value => Config.barWorkspaceStyle = value
                 }
@@ -1412,6 +1424,21 @@ PanelWindow {
                         { value: "skwd", label: "skwd-wall" }
                     ]
                     onChosen: value => Config.wallpaperProviderSetting = value
+                }
+                ChoiceRow {
+                    icon: "animation"
+                    title: "Transición"
+                    description: "Cómo entra un fondo nuevo cuando lo dibuja Elaren"
+                    current: Config.wallpaperTransition
+                    options: [
+                        { value: "fade", label: "Fundido" },
+                        { value: "zoom", label: "Zoom" },
+                        { value: "slide", label: "Deslizar" },
+                        { value: "wipe", label: "Barrido" },
+                        { value: "circle", label: "Círculo" },
+                        { value: "random", label: "Al azar" }
+                    ]
+                    onChosen: value => Config.wallpaperTransition = value
                 }
                 SliderRow {
                     icon: "swap_horiz"

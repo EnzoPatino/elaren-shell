@@ -49,13 +49,14 @@ Item {
             MaterialIcon {
                 anchors.centerIn: parent
                 text: Network.icon
+                rotation: Theme.bar.upright
                 color: Network.connected ? Theme.text : Theme.error
             }
         }
 
         Reveal {
             anchors.verticalCenter: parent.verticalCenter
-            shown: touch.containsMouse && Network.available
+            shown: touch.containsMouse && Network.available && !Theme.bar.vertical
 
             StyledText {
                 width: Math.min(implicitWidth, 140)

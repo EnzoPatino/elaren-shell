@@ -24,6 +24,7 @@ Item {
         MaterialIcon {
             anchors.verticalCenter: parent.verticalCenter
             text: PowerProfile.icon
+            rotation: Theme.bar.upright
             color: root.tint
             scale: touch.pressed ? 0.8 : 1
 
@@ -33,7 +34,7 @@ Item {
 
         Reveal {
             anchors.verticalCenter: parent.verticalCenter
-            shown: touch.containsMouse
+            shown: touch.containsMouse && !Theme.bar.vertical
 
             StyledText {
                 text: PowerProfile.label(PowerProfile.current)

@@ -44,12 +44,41 @@ BarGroup {
         width: Theme.bar.itemHeight - 6
         height: width
         shape: Config.barAvatarShape
+        rotation: Theme.bar.upright
         lookX: root.lookX
         lookY: root.lookY
     }
 
+    // En los costados: hora arriba y minutos abajo, derechos.
+    Upright {
+        anchors.verticalCenter: parent.verticalCenter
+        visible: Theme.bar.vertical
+
+        Column {
+            topPadding: Config.barShowAvatar ? Theme.spacing.small : 0
+            spacing: -3
+
+            Repeater {
+                model: Time.time.split(":")
+
+                RollingText {
+                    required property string modelData
+                    required property int index
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: modelData
+                    color: index === 0 ? Theme.text : Theme.primary
+                    font.family: Theme.font.family
+                    font.pixelSize: Theme.font.large
+                    font.weight: Font.Bold
+                    font.features: { "tnum": 1 }
+                }
+            }
+        }
+    }
+
     Row {
         anchors.verticalCenter: parent.verticalCenter
+        visible: !Theme.bar.vertical
         leftPadding: Config.barShowAvatar ? Theme.spacing.small : 0
         spacing: 1
 
@@ -104,6 +133,7 @@ BarGroup {
     MaterialIcon {
         anchors.verticalCenter: parent.verticalCenter
         text: "expand_more"
+        visible: !Theme.bar.vertical
         font.pixelSize: 16
         color: Theme.textMuted
         animateChange: false
