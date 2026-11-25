@@ -38,6 +38,13 @@ Singleton {
     // Elaren debe dibujar su propio fondo (una vez sabido quién lo hace).
     readonly property bool drawsOwn: providerKnown && !external
 
+    // Algún escritorio de Plasma usa el plugin de skwd-wall: el fondo real
+    // (también videos y escenas) lo sabe skwd-walld, no el Image= de Plasma.
+    property bool plasmaUsesSkwd: false
+    // skwd-walld dibuja el fondo, por su plugin de Plasma o en standalone.
+    readonly property bool skwdDraws: !Config.wallpaper
+        && (Config.wallpaperProvider === "skwd" || skwdStandalone || plasmaUsesSkwd)
+
     readonly property string plasmaConfig: `${Quickshell.env("HOME")}/.config/plasma-org.kde.plasma.desktop-appletsrc`
 
     readonly property var imageExt: /\.(jpe?g|png|webp|bmp|gif|avif|jxl|svg)$/i
@@ -86,6 +93,7 @@ Singleton {
             if (!images[m[1]]) images[m[1]] = {};
             images[m[1]][m[2]] = path;
         }
+        plasmaUsesSkwd = Object.values(plugins).includes("org.skwd.wall.plasma");
         for (const [id, plugin] of Object.entries(plugins)) {
             const path = images[id]?.[plugin];
             if (path) {

@@ -20,6 +20,8 @@ PanelWindow {
     implicitWidth: vertical ? Theme.bar.height + 2 * Theme.spacing.large : 0
     implicitHeight: vertical ? 0 : Theme.bar.height + Theme.spacing.large
     color: "transparent"
+    // Si la barra se oculta sola, las ventanas usan toda la pantalla.
+    exclusionMode: Config.barAutoHide ? ExclusionMode.Ignore : ExclusionMode.Auto
     mask: Region {}
     WlrLayershell.layer: WlrLayer.Bottom
     WlrLayershell.namespace: "elaren-bar-reserve"

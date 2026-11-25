@@ -64,6 +64,8 @@ _Isla, visualizador, fondos y bloqueo de sesión (2:00)._
   automáticamente con GameMode.
 - **Bloqueo y energía** con animaciones propias y pantalla de bloqueo de
   Elaren en los dos escritorios.
+- **Colores del fondo**: opcionalmente toda la shell toma la paleta del
+  wallpaper (imagen, video o fondo animado) y la sigue al cambiarlo.
 - **Panel de configuración** propio: todo se aplica al instante.
 
 ## Compatibilidad
@@ -242,7 +244,9 @@ o tocar tu configuración. Pasale al agente:
 
 Una franja de vidrio centrada que mide lo que su contenido, en el borde que
 elijas (arriba, abajo o a un costado). En Configuración → Barra superior podés
-dejar en el medio solo el avatar con el reloj y ocultar cada módulo.
+dejar en el medio solo el avatar con el reloj y ocultar cada módulo. Con
+"Ocultar sola" la barra se esconde cuando no la usás, libera su lugar para las
+ventanas y vuelve al llevar el ratón al borde.
 
 | Zona | Módulo | Interacción |
 |---|---|---|
@@ -306,6 +310,13 @@ segundo clic).
   `plasmashell`, `run.sh` lo pasa a modo standalone mientras Elaren corre y lo
   restaura al salir. Se controla con `ELAREN_SKWD_STANDALONE=0` y
   `ELAREN_WALLPAPER_PROVIDER=auto|elaren|skwd`.
+- **Colores del fondo** (Configuración → Apariencia): la barra, la isla, el
+  dock, los paneles y la pantalla de bloqueo de Plasma toman el acento y el
+  tono de las superficies del wallpaper, con una transición al cambiarlo (la
+  pantalla de bloqueo de Hyprland conserva siempre sus colores). Sirve con el
+  fondo de Elaren, el de Plasma y el de skwd-wall (de videos y escenas usa su
+  miniatura); para otros videos saca un fotograma con `ffmpeg`, si está
+  instalado.
 
 ### Widgets de escritorio
 

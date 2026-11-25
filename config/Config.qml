@@ -43,6 +43,9 @@ Singleton {
     // ── Apariencia ────────────────────────────────────────────────────────
     // Ver Theme.accentPresets
     property alias accent: store.accent
+    // Colores de toda la shell sacados del fondo de pantalla (imagen, video o
+    // escena de skwd-wall); el acento elegido queda de respaldo.
+    property alias themeFromWallpaper: store.themeFromWallpaper
     // Velocidad de las animaciones (0 = sin animaciones). ELAREN_ANIM_SCALE manda.
     property alias animationScale: store.animationScale
 
@@ -80,6 +83,8 @@ Singleton {
     // ── Barra superior ────────────────────────────────────────────────────
     // Borde de la pantalla: "top" | "bottom" | "left" | "right".
     property alias barPosition: store.barPosition
+    // Se esconde cuando no se usa; aparece al llevar el ratón al borde.
+    property alias barAutoHide: store.barAutoHide
     property alias barShowWorkspaces: store.barShowWorkspaces
     // Cómo se rotulan los escritorios: "numbers" | "roman" | "kanji" | "dots"
     property alias barWorkspaceStyle: store.barWorkspaceStyle
@@ -176,9 +181,11 @@ Singleton {
         visualizerLength: 0.92,
         visualizerDirection: "up",
         accent: "blue",
+        themeFromWallpaper: false,
         animationScale: 1.0,
         barShowWorkspaces: true,
         barPosition: "top",
+        barAutoHide: false,
         barWorkspaceStyle: "numbers",
         hyprlandWorkspaces: 5,
         barShowActiveWindow: true,
@@ -276,10 +283,12 @@ Singleton {
             property string visualizerDirection: "up"
 
             property string accent: "blue"
+            property bool themeFromWallpaper: false
             property real animationScale: 1.0
 
             property bool barShowWorkspaces: true
             property string barPosition: "top"
+            property bool barAutoHide: false
             property string barWorkspaceStyle: "numbers"
             property int hyprlandWorkspaces: 5
             property bool barShowActiveWindow: true

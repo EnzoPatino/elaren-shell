@@ -8,12 +8,27 @@ QtObject {
     id: root
 
     // ── Paleta ────────────────────────────────────────────────────────────
-    readonly property color surface: "#1e1e2e"
-    readonly property color surfaceContainer: "#282839"
-    readonly property color surfaceHigh: "#33334a"
-    readonly property color outline: "#45455e"
-    readonly property color text: "#e6e1e5"
-    readonly property color textMuted: "#a9a4bb"
+    // Colores de siempre. Con Configuración → Apariencia → "Colores del fondo"
+    // los reemplaza la paleta sacada del wallpaper (ver wallpaperPalette).
+    readonly property var basePalette: ({
+        surface: "#1e1e2e",
+        surfaceContainer: "#282839",
+        surfaceHigh: "#33334a",
+        outline: "#45455e",
+        text: "#e6e1e5",
+        textMuted: "#a9a4bb",
+        group: "#4a4a6a"
+    })
+    // Paleta en uso, con transición suave entre fondos (la fija
+    // services/WallpaperColors.qml). Sin ese servicio, null: valen las de arriba.
+    property var wallpaperPalette: null
+
+    readonly property color surface: wallpaperPalette?.surface ?? basePalette.surface
+    readonly property color surfaceContainer: wallpaperPalette?.surfaceContainer ?? basePalette.surfaceContainer
+    readonly property color surfaceHigh: wallpaperPalette?.surfaceHigh ?? basePalette.surfaceHigh
+    readonly property color outline: wallpaperPalette?.outline ?? basePalette.outline
+    readonly property color text: wallpaperPalette?.text ?? basePalette.text
+    readonly property color textMuted: wallpaperPalette?.textMuted ?? basePalette.textMuted
     // Acento elegido en Configuración → Apariencia
     readonly property var accentPresets: [
         { id: "blue", name: "Azul", primary: "#a6c8ff", secondary: "#cdb4ff", on: "#0b2a52" },
@@ -26,9 +41,9 @@ QtObject {
     ]
     readonly property var accentPreset: accentPresets.find(p => p.id === Config.accent) ?? accentPresets[0]
 
-    readonly property color primary: accentPreset.primary
-    readonly property color textOnPrimary: accentPreset.on
-    readonly property color secondary: accentPreset.secondary
+    readonly property color primary: wallpaperPalette?.primary ?? accentPreset.primary
+    readonly property color textOnPrimary: wallpaperPalette?.textOnPrimary ?? accentPreset.on
+    readonly property color secondary: wallpaperPalette?.secondary ?? accentPreset.secondary
     readonly property color success: "#a6e3a1"
     readonly property color warning: "#f9e2af"
     readonly property color error: "#f38ba8"
@@ -41,7 +56,7 @@ QtObject {
     readonly property color glass: Qt.alpha(surface, gaming ? 0.95 : 0.78)
     readonly property color glassBorder: Qt.alpha("white", 0.08)
     readonly property color glassHighlight: Qt.alpha("white", 0.05)
-    readonly property color group: Qt.alpha("#4a4a6a", 0.32)
+    readonly property color group: Qt.alpha(wallpaperPalette?.group ?? basePalette.group, 0.32)
     readonly property color groupActive: Qt.alpha(primary, 0.2)
 
     // ── Forma y espacio ───────────────────────────────────────────────────

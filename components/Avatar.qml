@@ -35,6 +35,11 @@ Item {
         : Config.barAvatarImage
     property real lookX: 0
     property real lookY: 0
+    // Colores del fondo y del respaldo; por defecto los del tema. La pantalla
+    // de bloqueo de Hyprland pasa los fijos (ver modules/lock/LockSurface.qml).
+    property color accent: Theme.primary
+    property color accentSecondary: Theme.secondary
+    property color accentOn: Theme.textOnPrimary
 
     implicitWidth: 24
     implicitHeight: 24
@@ -117,8 +122,8 @@ Item {
                 anchors.fill: parent
                 visible: !root.drawn
                 gradient: Gradient {
-                    GradientStop { position: 0; color: Qt.alpha(Theme.primary, 0.35) }
-                    GradientStop { position: 1; color: Qt.alpha(Theme.secondary, 0.2) }
+                    GradientStop { position: 0; color: Qt.alpha(root.accent, 0.35) }
+                    GradientStop { position: 1; color: Qt.alpha(root.accentSecondary, 0.2) }
                 }
             }
 
@@ -143,15 +148,15 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 gradient: Gradient {
-                    GradientStop { position: 0; color: Theme.primary }
-                    GradientStop { position: 1; color: Theme.secondary }
+                    GradientStop { position: 0; color: root.accent }
+                    GradientStop { position: 1; color: root.accentSecondary }
                 }
             }
 
             MaterialIcon {
                 anchors.centerIn: parent
                 text: "person"
-                color: Theme.textOnPrimary
+                color: root.accentOn
                 font.pixelSize: parent.height * 0.62
                 animateChange: false
             }

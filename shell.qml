@@ -22,9 +22,10 @@ ShellRoot {
 
     // Servicios con IPC propio que ningún módulo visible instancia de
     // entrada: se crean acá para que `qs ipc call gamemode …` y
-    // `… lockscreen …` y `… bar …` respondan desde el arranque y para mantener
-    // sincronizada la pantalla de bloqueo.
-    readonly property list<QtObject> eagerServices: [GameMode, LockScreen, SessionLock, BarControl]
+    // `… lockscreen …` y `… bar …` respondan desde el arranque, para mantener
+    // sincronizada la pantalla de bloqueo y para que los colores sigan al
+    // fondo de pantalla (Configuración → Apariencia).
+    readonly property list<QtObject> eagerServices: [GameMode, LockScreen, SessionLock, BarControl, WallpaperColors]
 
     // Bloqueo de sesión propio (Hyprland; en Plasma bloquea kscreenlocker).
     // Se carga por ruta para que, donde no hace falta, Quickshell no tenga

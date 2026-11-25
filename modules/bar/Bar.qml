@@ -15,6 +15,7 @@ import "../../services"
 // obligaría a Qt y a KWin a redibujar y componer 1920×1080 en cada tic del
 // reloj. Al abrir la isla pasa a cubrir toda la pantalla (transparente) para
 // que un clic afuera la cierre, y vuelve a la franja al terminar de cerrarse.
+// Puede ocultarse sola cuando no se usa (ver "Ocultar sola").
 //
 // Barra e isla se dibujan como UNA forma de vidrio. La geometría se calcula en
 // un marco "canónico" (X a lo largo de la barra, Y hacia el interior de la
@@ -45,7 +46,11 @@ PanelWindow {
     // Teclado solo con la isla abierta (para Escape).
     WlrLayershell.keyboardFocus: islandOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-    mask: Region { item: root.islandShown ? catcher : barArea }
+    mask: Region {
+        item: root.islandShown ? catcher : barArea
+
+        Region { item: edgeZone }
+    }
 
     // Desenfoque real (KWin) detrás de la barra y de la isla. En modo
     // gaming se apaga: KWin lo recalcularía en cada cuadro del juego.
@@ -148,9 +153,47 @@ PanelWindow {
     readonly property real inset: vertical ? Theme.spacing.large : Theme.spacing.small
     readonly property real barRadius: Math.min(Theme.radius.large, thickness / 2)
 
-    // Entrada al arrancar: la barra llega desde afuera de la pantalla.
-    property real slide: revealed ? 0 : 1
-    Behavior on slide { Anim { duration: Theme.anim.extraSlow; easing.bezierCurve: Theme.anim.expressive } }
+    // ── Ocultar sola ──────────────────────────────────────────────────────
+    // Con Configuración → Barra → "Ocultar sola", la barra se va cuando el
+    // ratón no está encima y vuelve al tocar el borde de la pantalla. Se queda
+    // mientras la isla está abierta y se muestra un momento al arrancar.
+    readonly property bool hovering: pointer.hovered
+    property bool lingering: false
+    property bool peeking: true
+    readonly property bool autoHidden: Config.barAutoHide && !islandOpen && !islandShown
+        && !hovering && !lingering && !peeking
+    readonly property bool shown: revealed && !autoHidden
+
+    onHoveringChanged: {
+        if (hovering) {
+            lingerTimer.stop();
+        } else {
+            lingering = true;
+            lingerTimer.restart();
+        }
+    }
+
+    Timer {
+        id: lingerTimer
+        interval: 600
+        onTriggered: root.lingering = false
+    }
+
+    Timer {
+        interval: 2500
+        running: Config.barAutoHide
+        onTriggered: root.peeking = false
+    }
+
+    // Entra con rebote (también al arrancar, desde afuera de la pantalla) y
+    // sale acelerando.
+    property real slide: 1
+    onShownChanged: {
+        slideAnim.easing.bezierCurve = shown ? Theme.anim.expressive : Theme.anim.emphasizedAccel;
+        slideAnim.duration = shown ? Theme.anim.extraSlow : Theme.anim.normal;
+        slide = shown ? 0 : 1;
+    }
+    Behavior on slide { Anim { id: slideAnim } }
 
     readonly property real contentLength: mainRow.implicitWidth + 2 * (Theme.spacing.small + 1)
 
@@ -205,6 +248,11 @@ PanelWindow {
 
     readonly property rect barRect: toScreen(barStart, barTop, barStart + barLength, barBottom)
     readonly property rect islandRect: toScreen(islandStart, barBottom, islandStart + islandW, barBottom + islandH)
+    // Franja del borde que despierta a la barra oculta. Visible, cubre también
+    // el hueco entre el borde y la barra para que el ratón no "caiga" ahí.
+    readonly property rect edgeRect: Config.barAutoHide
+        ? toScreen(barStart, 0, barStart + barLength, autoHidden ? 2 : Math.max(2, barTop + 1))
+        : Qt.rect(0, 0, 0, 0)
     readonly property rect jointRect: toScreen(islandStart, barBottom - 1, islandStart + islandW, barBottom + Math.min(islandH, Theme.radius.large))
 
     // Contorno de barra + isla con empalmes cóncavos donde se unen.
@@ -221,6 +269,14 @@ PanelWindow {
         const island = `H ${ix1 + f} A ${f} ${f} 0 0 0 ${ix1} ${y1 + f} V ${iy1 - R} A ${R} ${R} 0 0 1 ${ix1 - R} ${iy1}`
             + ` H ${ix0 + R} A ${R} ${R} 0 0 1 ${ix0} ${iy1 - R} V ${y1 + f} A ${f} ${f} 0 0 0 ${ix0 - f} ${y1}`;
         return top + " " + island + " " + close;
+    }
+
+    Item {
+        id: edgeZone
+        x: root.edgeRect.x
+        y: root.edgeRect.y
+        width: root.edgeRect.width
+        height: root.edgeRect.height
     }
 
     // ── Clic afuera ───────────────────────────────────────────────────────

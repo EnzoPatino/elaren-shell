@@ -947,7 +947,20 @@ PanelWindow {
                 title: "Color de acento"
                 icon: "palette"
 
+                SwitchRow {
+                    icon: "wallpaper"
+                    title: "Colores del fondo"
+                    description: !Config.themeFromWallpaper ? "Toda la shell toma los colores del fondo de pantalla, también de videos y fondos animados"
+                        : WallpaperColors.ready ? "Siguiendo el fondo de pantalla; cambian solos con él"
+                        : "Todavía no pude leer el fondo; mientras, uso el acento elegido"
+                    checked: Config.themeFromWallpaper
+                    onToggled: value => Config.themeFromWallpaper = value
+                }
+
                 Flow {
+                    // Con los colores del fondo, el acento elegido queda de respaldo.
+                    opacity: Config.themeFromWallpaper ? 0.45 : 1
+                    Behavior on opacity { Anim {} }
                     width: parent.width
                     spacing: 10
                     padding: 12
@@ -1024,7 +1037,7 @@ PanelWindow {
                 }
             }
 
-            ResetButton { section: "accent|animationScale" }
+            ResetButton { section: "accent|themeFromWallpaper|animationScale" }
         }
     }
 
@@ -1051,6 +1064,13 @@ PanelWindow {
                         { value: "right", label: "Derecha", icon: "align_horizontal_right" }
                     ]
                     onChosen: value => Config.barPosition = value
+                }
+                SwitchRow {
+                    icon: "visibility_off"
+                    title: "Ocultar sola"
+                    description: "Se esconde cuando no la usás; aparece al llevar el ratón al borde"
+                    checked: Config.barAutoHide
+                    onToggled: value => Config.barAutoHide = value
                 }
                 ChoiceRow {
                     icon: "align_horizontal_center"
